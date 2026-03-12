@@ -180,6 +180,24 @@
 </head>
 <body>
 
+<!-- PASSWORD GATE -->
+<div id="pw-gate" style="position:fixed;inset:0;background:#07090f;display:flex;align-items:center;justify-content:center;z-index:9999;">
+  <div style="text-align:center;">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:#00e676;letter-spacing:3px;text-transform:uppercase;margin-bottom:32px;">▸ Matchup Monitor</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#3a4f65;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;">Access Code</div>
+    <input id="pw-input" type="password" placeholder="enter code"
+      style="font-family:'IBM Plex Mono',monospace;font-size:13px;background:#0d1117;border:1px solid #2a3a50;color:#c8d6e8;padding:10px 16px;border-radius:3px;outline:none;width:220px;text-align:center;letter-spacing:2px;"
+      onkeydown="if(event.key==='Enter')checkPW()" />
+    <div style="margin-top:8px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#3a0a0a;letter-spacing:1px;" id="pw-error"></div>
+    <div style="margin-top:16px;">
+      <button onclick="checkPW()"
+        style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;padding:8px 24px;border-radius:3px;border:1px solid #00e676;color:#00e676;background:transparent;cursor:pointer;">
+        ENTER
+      </button>
+    </div>
+  </div>
+</div>
+
 <div class="scan-line" id="scan-line"></div>
 
 <div class="topbar">
@@ -250,6 +268,22 @@
 </div>
 
 <script>
+const API_KEY = "";
+const ACCESS_PW = "pre_tourney26";
+
+function checkPW() {
+  const val = document.getElementById("pw-input").value;
+  if (val === ACCESS_PW) {
+    document.getElementById("pw-gate").style.display = "none";
+  } else {
+    const err = document.getElementById("pw-error");
+    err.textContent = "INCORRECT CODE";
+    err.style.color = "#ff4444";
+    document.getElementById("pw-input").value = "";
+    document.getElementById("pw-input").focus();
+  }
+}
+
 const TOURNAMENTS = {
   bigten: {
     label: "Big Ten Men's Tournament", abbr: "B1G", venue: "Gainbridge Fieldhouse, Indianapolis",
@@ -656,9 +690,9 @@ async function runScan() {
 }
 
 async function callClaude(systemPrompt, userPrompt) {
-  const resp = await fetch("https://api.anthropic.com/v1/messages", {
+  const resp = await fetch("https://matchup-proxy.ttsega386.workers.dev/", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "x-api-key": API_KEY, "anthropic-version": "2023-06-01" },
     body: JSON.stringify({
       model: "claude-sonnet-4-20250514",
       max_tokens: 1200,
