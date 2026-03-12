@@ -718,17 +718,45 @@ async function checkMatchups(key, label) {
 
 async function checkTicketPricing(key, label) {
   try {
-    const gamesList = TOURNAMENTS[key].sessions.flatMap(s =>
-      s.games.map(g => { const c = state.games[g.id]; return `${c.team1} vs ${c.team2} (${s.date} ${c.time})`; })
-    ).join("; ");
+    const tourney = TOURNAMENTS[key];
+    const sessionQueries = tourney.sessions.map(s => {
+      const confirmed = s.games.map(g => state.games[g.id]).filter(g => g.team1 !== "TBD" && g.team2 !== "TBD").map(g => g.team1 + " vs " + g.team2).join(", ");
+      return s.label + " (" + s.date + ") at " + tourney.venue + (confirmed ? " — games: " + confirmed : "");
+    }).join("\n");
 
-    const text = await callClaude(
-      `You are a secondary ticket market analyst. Search StubHub, SeatGeek, and Ticketmaster for CURRENT ticket prices for college basketball tournament games. Return ONLY a valid JSON array, no markdown:\n[{"team1":"Kansas","team2":"Iowa State","getIn":95,"avg":155,"listings":180,"face":70,"source":"StubHub"}]\ngetIn=lowest available. avg=average listing. listings=total available. face=Ticketmaster face value. Use null for unavailable. Return [] if no data.`,
-      `Get current secondary market ticket prices from StubHub and SeatGeek for these ${label} games: ${gamesList}. Return JSON array only.`
-    );
-    const m = text.match(/\[[\s\S]*?\]/);
-    if (m) { let prices = []; try { prices = JSON.parse(m[0]); } catch(e) {} if (prices.length) processPricing(key, prices); }
-  } catch(e) { addLog(`${TOURNAMENTS[key].abbr} pricing check failed: ${e.message}`, "warn"); }
+    const sysPrompt = `You are a secondary ticket market analyst. Your job is to find the most accurate current ticket prices across ALL major secondary markets.
+
+For each session, you MUST search using ALL of the following naming conventions to maximize price data hits:
+1. Session-based: e.g. "Big Ten Tournament Session 5 tickets 2026"
+2. Round-based: e.g. "Big Ten Men's Basketball Tournament Quarterfinals tickets"
+3. Venue-based: e.g. "Gainbridge Fieldhouse basketball tickets March 13 2026"
+4. Date-based: e.g. "Big Ten Tournament March 13 2026 tickets"
+5. Team-based (for confirmed matchups): e.g. "Michigan vs Ohio State Big Ten Tournament tickets"
+6. Abbreviation-based: e.g. "B1G Tournament tickets 2026"
+7. Full championship name: e.g. "Big Ten Men's Basketball Championship 2026 tickets"
+8. Platform-specific searches on: StubHub, SeatGeek, Vivid Seats, Ticketmaster, TickPick, Gametime, AXS
+
+Search each platform individually if needed. Use the LOWEST get-in price found across all platforms as getIn. Use the most complete listing data available.
+
+Return ONLY a valid JSON array, no markdown, no explanation:
+[{"team1":"Michigan","team2":"Ohio State","session":"Quarterfinals","getIn":95,"avg":155,"listings":180,"face":70,"source":"StubHub"}]
+
+Rules:
+- getIn = single lowest available ticket price across all platforms searched
+- avg = average listing price
+- listings = total tickets available
+- face = Ticketmaster or venue box office face value
+- source = platform where getIn was found
+- Use null for any field with no data
+- Return one object per confirmed matchup
+- Return [] only if every single search attempt returns zero results`;
+
+    const userPrompt = "Search ALL major secondary ticket markets (StubHub, SeatGeek, Vivid Seats, Ticketmaster, TickPick, Gametime) using EVERY possible naming convention for the " + label + " at " + tourney.venue + " March 13-15 2026. Try session names, round names, team names, venue searches, and date searches. Sessions to price:\n" + sessionQueries + "\nAggregate the best data found. Return JSON array only.";
+
+    const text = await callClaude(sysPrompt, userPrompt);
+    const m = text.match(/\[\s\S]*?\]/);
+    if (m) { let prices = []; try { prices = JSON.parse(m[0]); } catch(e) {} if (prices.length) processPricing(key, prices); else addLog(tourney.abbr + " pricing: no listings found yet", ""); }
+  } catch(e) { addLog(TOURNAMENTS[key].abbr + " pricing check failed: " + e.message, "warn"); }
 }
 
 function processMatchups(key, incoming) {
