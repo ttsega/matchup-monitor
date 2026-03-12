@@ -754,7 +754,7 @@ Rules:
     const userPrompt = "Search ALL major secondary ticket markets (StubHub, SeatGeek, Vivid Seats, Ticketmaster, TickPick, Gametime) using EVERY possible naming convention for the " + label + " at " + tourney.venue + " March 13-15 2026. Try session names, round names, team names, venue searches, and date searches. Sessions to price:\n" + sessionQueries + "\nAggregate the best data found. Return JSON array only.";
 
     const text = await callClaude(sysPrompt, userPrompt);
-    const m = text.match(/\[\s\S]*?\]/);
+    const m = text.match(/\[[\s\S]*?\]/);
     if (m) { let prices = []; try { prices = JSON.parse(m[0]); } catch(e) {} if (prices.length) processPricing(key, prices); else addLog(tourney.abbr + " pricing: no listings found yet", ""); }
   } catch(e) { addLog(TOURNAMENTS[key].abbr + " pricing check failed: " + e.message, "warn"); }
 }
