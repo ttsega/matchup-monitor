@@ -679,8 +679,12 @@ async function runScan() {
     { key: "sec",    label: "SEC Men's Basketball Tournament 2026" }
   ];
 
+  const delay = ms => new Promise(r => setTimeout(r, ms));
   for (const t of tourneys) {
-    await Promise.all([ checkMatchups(t.key, t.label), checkTicketPricing(t.key, t.label) ]);
+    await checkMatchups(t.key, t.label);
+    await delay(3000);
+    await checkTicketPricing(t.key, t.label);
+    await delay(5000);
   }
 
   document.getElementById("last-checked").textContent = "Last scan: " + new Date().toLocaleTimeString();
