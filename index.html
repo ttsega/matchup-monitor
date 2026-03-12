@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Matchup Monitor — Tournament Ops</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #07090f; --bg2: #0d1117; --bg3: #141922; --bg4: #1c2333;
+    --border: #1e2a3a; --border2: #2a3a50;
+    --text: #c8d6e8; --text-muted: #5a7090; --text-dim: #3a4f65;
+    --green: #00e676; --green-dim: #003a1f; --green-mid: #00b854;
+    --amber: #ffb300; --amber-dim: #3a2800; --amber-mid: #cc8f00;
+    --red: #ff4444; --red-dim: #3a0a0a; --red-mid: #cc2222;
+    --blue: #2979ff; --blue-dim: #0a1a3a; --teal: #00bcd4;
+    --font-mono: 'IBM Plex Mono', monospace;
+    --font-sans: 'IBM Plex Sans', sans-serif;
+  }
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--font-sans); font-size: 13px; line-height: 1.5; }
+
+  .topbar { display: flex; align-items: center; justify-content: space-between; padding: 0 20px; height: 48px; background: var(--bg2); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
+  .topbar-left { display: flex; align-items: center; gap: 16px; }
+  .logo { font-family: var(--font-mono); font-weight: 600; font-size: 13px; color: var(--green); letter-spacing: 2px; text-transform: uppercase; }
+  .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-dim); display: inline-block; }
+  .status-dot.live { background: var(--green); box-shadow: 0 0 6px var(--green); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+  .status-label { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+  .topbar-right { display: flex; align-items: center; gap: 12px; }
+  .last-checked { font-family: var(--font-mono); font-size: 11px; color: var(--text-dim); }
+
+  .controls-bar { display: flex; align-items: center; gap: 12px; padding: 10px 20px; background: var(--bg2); border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+  .btn { font-family: var(--font-mono); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; padding: 6px 14px; border-radius: 3px; border: 1px solid; cursor: pointer; transition: all .15s; white-space: nowrap; background: transparent; }
+  .btn-primary { border-color: var(--green); color: var(--green); }
+  .btn-primary:hover { background: var(--green-dim); }
+  .btn-primary.active { background: var(--green); color: #000; }
+  .btn-ghost { border-color: var(--border2); color: var(--text-muted); }
+  .btn-ghost:hover { border-color: var(--text-muted); color: var(--text); }
+  select { font-family: var(--font-mono); font-size: 11px; background: var(--bg3); border: 1px solid var(--border2); color: var(--text-muted); padding: 5px 8px; border-radius: 3px; cursor: pointer; letter-spacing: 1px; text-transform: uppercase; }
+  .controls-label { font-family: var(--font-mono); font-size: 11px; color: var(--text-dim); letter-spacing: 1px; text-transform: uppercase; }
+
+  .summary-bar { display: flex; background: var(--bg2); border-bottom: 1px solid var(--border); overflow-x: auto; }
+  .summary-stat { padding: 8px 20px; border-right: 1px solid var(--border); display: flex; flex-direction: column; gap: 2px; min-width: 115px; }
+  .s-label { font-family: var(--font-mono); font-size: 9px; color: var(--text-dim); letter-spacing: 2px; text-transform: uppercase; }
+  .s-value { font-family: var(--font-mono); font-size: 16px; font-weight: 600; color: var(--text); }
+  .s-value.up { color: var(--green); }
+  .s-value.down { color: var(--red); }
+  .s-sub { font-family: var(--font-mono); font-size: 9px; color: var(--text-dim); }
+
+  #alert-tray { padding: 0 20px; }
+  .alert-item { display: flex; align-items: center; gap: 12px; border-radius: 3px; padding: 8px 14px; margin: 6px 0; font-family: var(--font-mono); font-size: 12px; animation: slideIn .3s ease; }
+  .alert-item.matchup { background: var(--green-dim); border: 1px solid var(--green-mid); }
+  .alert-item.price-spike { background: var(--amber-dim); border: 1px solid var(--amber-mid); }
+  .alert-item.price-drop { background: var(--red-dim); border: 1px solid var(--red-mid); }
+  @keyframes slideIn { from{transform:translateX(-10px);opacity:0} to{transform:translateX(0);opacity:1} }
+  .alert-badge { font-weight: 600; text-transform: uppercase; font-size: 10px; letter-spacing: 1px; white-space: nowrap; }
+  .alert-item.matchup .alert-badge { color: var(--green); }
+  .alert-item.price-spike .alert-badge { color: var(--amber); }
+  .alert-item.price-drop .alert-badge { color: var(--red); }
+  .alert-text { flex: 1; color: var(--text-muted); }
+  .alert-time { color: var(--text-dim); font-size: 10px; }
+  .alert-close { color: var(--text-dim); cursor: pointer; font-size: 18px; line-height: 1; margin-left: 4px; }
+  .alert-close:hover { color: var(--text); }
+
+  .tabs { display: flex; padding: 0 20px; background: var(--bg2); border-bottom: 1px solid var(--border); overflow-x: auto; }
+  .tab { font-family: var(--font-mono); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; padding: 12px 16px; cursor: pointer; border-bottom: 2px solid transparent; color: var(--text-dim); transition: all .15s; white-space: nowrap; }
+  .tab:hover { color: var(--text-muted); }
+  .tab.active { color: var(--teal); border-bottom-color: var(--teal); }
+  .tab-badge { display: inline-block; margin-left: 6px; padding: 1px 5px; border-radius: 8px; font-size: 9px; font-weight: 600; background: var(--amber-dim); color: var(--amber); vertical-align: middle; }
+  .tab-badge.all-clear { background: var(--green-dim); color: var(--green-mid); }
+
+  .main { padding: 16px 20px; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  .session-block { margin-bottom: 24px; }
+  .session-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim); border-bottom: 1px solid var(--border); padding-bottom: 6px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+  .session-label span { color: var(--text-muted); }
+  .session-label .session-date { margin-left: auto; }
+
+  .games-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 8px; }
+  .game-card { background: var(--bg3); border: 1px solid var(--border); border-radius: 4px; padding: 12px 14px; transition: border-color .2s; position: relative; }
+  .game-card:hover { border-color: var(--border2); }
+  .game-card.has-tbd { border-left: 3px solid var(--amber); }
+  .game-card.newly-confirmed { border-left: 3px solid var(--green); animation: flashGreen .8s ease; }
+  .game-card.high-risk { border-left: 3px solid var(--red); }
+  .game-card.price-spike-card { border-top: 2px solid var(--amber); }
+  .game-card.price-drop-card { border-top: 2px solid var(--red); }
+  @keyframes flashGreen { 0%,100%{background:var(--bg3)} 30%{background:#001a0a} }
+
+  .card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .game-time { font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); letter-spacing: 1px; }
+  .card-actions { display: flex; gap: 6px; align-items: center; }
+  .matchup-line { font-family: var(--font-mono); font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+  .team { max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .vs-sep { color: var(--text-dim); font-size: 11px; font-weight: 400; }
+  .tbd-team { color: var(--amber); }
+  .newly-team { color: var(--green); }
+
+  .status-badges { display: flex; gap: 5px; margin-bottom: 10px; flex-wrap: wrap; }
+  .badge { font-family: var(--font-mono); font-size: 9px; letter-spacing: 1px; text-transform: uppercase; padding: 2px 7px; border-radius: 2px; font-weight: 500; }
+  .badge-tbd { background: var(--amber-dim); color: var(--amber); border: 1px solid #5a3a00; }
+  .badge-confirmed { background: var(--green-dim); color: var(--green-mid); border: 1px solid #003a1f; }
+  .badge-new { background: var(--green); color: #000; animation: pulse 1.5s infinite; }
+  .badge-risk { background: var(--red-dim); color: var(--red); border: 1px solid #5a0a0a; }
+  .badge-spike { background: var(--amber-dim); color: var(--amber); border: 1px solid #5a3a00; }
+  .badge-drop { background: var(--red-dim); color: var(--red-mid); border: 1px solid #5a0a0a; }
+  .badge-pending { background: var(--bg4); color: var(--text-dim); border: 1px solid var(--border); }
+
+  .flag-btn { width: 24px; height: 24px; border-radius: 3px; border: 1px solid var(--border2); background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .15s; font-size: 13px; }
+  .flag-btn:hover { border-color: var(--red); }
+  .flag-btn.flagged { background: var(--red-dim); border-color: var(--red); }
+
+  /* TICKET BLOCK */
+  .ticket-block { border-top: 1px solid var(--border); margin-top: 10px; padding-top: 10px; }
+  .ticket-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .ticket-source { font-family: var(--font-mono); font-size: 9px; color: var(--text-dim); letter-spacing: 1px; text-transform: uppercase; }
+  .ticket-updated { font-family: var(--font-mono); font-size: 9px; color: var(--text-dim); }
+
+  .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
+  .metric-cell { background: var(--bg4); border-radius: 3px; padding: 7px 8px; }
+  .metric-label { font-family: var(--font-mono); font-size: 8px; color: var(--text-dim); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 3px; }
+  .metric-value { font-family: var(--font-mono); font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.2; }
+  .metric-value.pending { color: var(--text-dim); font-size: 10px; }
+  .metric-delta { font-family: var(--font-mono); font-size: 9px; margin-top: 2px; }
+  .metric-delta.up { color: var(--green-mid); }
+  .metric-delta.down { color: var(--red); }
+  .metric-delta.flat { color: var(--text-dim); }
+
+  .delta-row { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 5px; }
+  .delta-cell { background: var(--bg4); border-radius: 3px; padding: 6px 8px; display: flex; align-items: center; justify-content: space-between; }
+  .delta-cell-label { font-family: var(--font-mono); font-size: 8px; color: var(--text-dim); letter-spacing: 1px; text-transform: uppercase; }
+  .delta-cell-value { font-family: var(--font-mono); font-size: 11px; font-weight: 600; }
+  .delta-cell-value.up { color: var(--green); }
+  .delta-cell-value.down { color: var(--red); }
+  .delta-cell-value.flat { color: var(--text-dim); }
+
+  .aggression-bar { margin-top: 6px; background: var(--bg4); border-radius: 3px; padding: 7px 10px; display: flex; align-items: center; gap: 10px; }
+  .aggression-label { font-family: var(--font-mono); font-size: 8px; color: var(--text-dim); letter-spacing: 1px; text-transform: uppercase; white-space: nowrap; }
+  .aggression-signal { font-family: var(--font-mono); font-size: 11px; font-weight: 600; }
+  .sig-aggressive { color: var(--green); }
+  .sig-lean { color: var(--green-mid); }
+  .sig-neutral { color: var(--text-muted); }
+  .sig-cautious { color: var(--amber); }
+  .sig-backoff { color: var(--red); }
+  .sig-pending { color: var(--text-dim); font-size: 10px; }
+  .aggression-reason { font-family: var(--font-mono); font-size: 9px; color: var(--text-dim); margin-left: auto; }
+
+  .scan-line { pointer-events: none; position: fixed; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--teal), transparent); animation: scan 3s linear infinite; opacity: 0; transition: opacity .3s; }
+  .scan-line.active { opacity: 1; }
+  @keyframes scan { from{transform:translateY(0)} to{transform:translateY(100vh)} }
+
+  .activity-panel { position: fixed; right: 0; top: 0; bottom: 0; width: 300px; background: var(--bg2); border-left: 1px solid var(--border); display: flex; flex-direction: column; transform: translateX(100%); transition: transform .25s; z-index: 200; }
+  .activity-panel.open { transform: translateX(0); }
+  .activity-header { padding: 12px 14px; border-bottom: 1px solid var(--border); font-family: var(--font-mono); font-size: 11px; color: var(--teal); letter-spacing: 2px; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; }
+  .activity-close { cursor: pointer; color: var(--text-dim); font-size: 18px; line-height: 1; }
+  .activity-close:hover { color: var(--text); }
+  .activity-log { flex: 1; overflow-y: auto; padding: 10px 0; }
+  .log-entry { padding: 7px 14px; border-bottom: 1px solid var(--border); }
+  .log-time { font-family: var(--font-mono); font-size: 9px; color: var(--text-dim); letter-spacing: 1px; margin-bottom: 2px; }
+  .log-msg { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); line-height: 1.4; }
+  .log-msg.success { color: var(--green-mid); }
+  .log-msg.warn { color: var(--amber); }
+  .log-msg.price-up { color: var(--green); }
+  .log-msg.price-down { color: var(--red); }
+
+  #log-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 190; }
+  #log-overlay.open { display: block; }
+
+  .checking-indicator { font-family: var(--font-mono); font-size: 11px; color: var(--teal); letter-spacing: 1px; display: none; align-items: center; gap: 6px; }
+  .checking-indicator.visible { display: flex; }
+  .spin { display: inline-block; width: 10px; height: 10px; border: 1.5px solid var(--teal); border-top-color: transparent; border-radius: 50%; animation: spin .8s linear infinite; }
+  @keyframes spin { to{transform:rotate(360deg)} }
+
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<div class="scan-line" id="scan-line"></div>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <span class="logo">▸ Matchup Monitor</span>
+    <span class="status-dot" id="status-dot"></span>
+    <span class="status-label" id="status-label">IDLE</span>
+  </div>
+  <div class="topbar-right">
+    <span class="checking-indicator" id="checking-indicator"><span class="spin"></span>SCANNING...</span>
+    <span class="last-checked" id="last-checked">—</span>
+    <button class="btn btn-ghost" onclick="toggleLog()">LOG</button>
+  </div>
+</div>
+
+<div class="controls-bar">
+  <button class="btn btn-primary" id="monitor-btn" onclick="toggleMonitor()">START MONITOR</button>
+  <button class="btn btn-ghost" onclick="runScan()" id="scan-btn">MANUAL SCAN</button>
+  <span class="controls-label">INTERVAL:</span>
+  <select id="interval-select" onchange="updateInterval()">
+    <option value="2">2 MIN</option>
+    <option value="5" selected>5 MIN</option>
+    <option value="10">10 MIN</option>
+    <option value="15">15 MIN</option>
+  </select>
+  <span class="controls-label" style="margin-left:10px;">SPIKE ALERT:</span>
+  <select id="threshold-select" onchange="updateThreshold()">
+    <option value="5">5%</option>
+    <option value="8" selected>8%</option>
+    <option value="10">10%</option>
+    <option value="15">15%</option>
+  </select>
+  <span style="flex:1"></span>
+  <span class="controls-label" id="next-scan-label"></span>
+</div>
+
+<div class="summary-bar">
+  <div class="summary-stat"><span class="s-label">TBDs Remaining</span><span class="s-value" id="sum-tbds">—</span><span class="s-sub">all tournaments</span></div>
+  <div class="summary-stat"><span class="s-label">Price Spikes</span><span class="s-value up" id="sum-spikes">0</span><span class="s-sub">this session</span></div>
+  <div class="summary-stat"><span class="s-label">Price Drops</span><span class="s-value down" id="sum-drops">0</span><span class="s-sub">this session</span></div>
+  <div class="summary-stat"><span class="s-label">Flagged</span><span class="s-value" id="sum-flags">0</span><span class="s-sub">high risk games</span></div>
+  <div class="summary-stat"><span class="s-label">Avg Get-In Move</span><span class="s-value" id="sum-avg-move">—</span><span class="s-sub">vs session open</span></div>
+  <div class="summary-stat"><span class="s-label">Aggressive Signals</span><span class="s-value up" id="sum-aggressive">0</span><span class="s-sub">games signaling</span></div>
+</div>
+
+<div id="alert-tray"></div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('bigten')" id="tab-bigten">Big Ten Men's <span class="tab-badge" id="badge-bigten">0</span></div>
+  <div class="tab" onclick="switchTab('acc')" id="tab-acc">ACC <span class="tab-badge" id="badge-acc">0</span></div>
+  <div class="tab" onclick="switchTab('big12')" id="tab-big12">Big 12 <span class="tab-badge" id="badge-big12">0</span></div>
+  <div class="tab" onclick="switchTab('sec')" id="tab-sec">SEC <span class="tab-badge" id="badge-sec">0</span></div>
+</div>
+
+<div class="main">
+  <div class="panel active" id="panel-bigten"></div>
+  <div class="panel" id="panel-acc"></div>
+  <div class="panel" id="panel-big12"></div>
+  <div class="panel" id="panel-sec"></div>
+</div>
+
+<div id="log-overlay" onclick="toggleLog()"></div>
+<div class="activity-panel" id="activity-panel">
+  <div class="activity-header">Activity Log <span class="activity-close" onclick="toggleLog()">×</span></div>
+  <div class="activity-log" id="activity-log">
+    <div class="log-entry"><div class="log-msg">Monitor initialized.</div></div>
+  </div>
+</div>
+
+<script>
+const TOURNAMENTS = {
+  bigten: {
+    label: "Big Ten Men's Tournament", abbr: "B1G", venue: "Gainbridge Fieldhouse, Indianapolis",
+    sessions: [
+      { label: "Session 5 — Quarterfinals", date: "3/13", games: [
+        { id: "b1g-s5-1", team1: "Indiana", team2: "TBD", time: "12:00 PM ET" },
+        { id: "b1g-s5-2", team1: "Purdue", team2: "TBD", time: "2:30 PM ET" },
+        { id: "b1g-s5-3", team1: "Ohio State", team2: "TBD", time: "7:00 PM ET" },
+        { id: "b1g-s5-4", team1: "Wisconsin", team2: "TBD", time: "9:30 PM ET" }
+      ]},
+      { label: "Session 6 — Quarterfinals", date: "3/14", games: [
+        { id: "b1g-s6-1", team1: "Michigan", team2: "TBD", time: "12:00 PM ET" },
+        { id: "b1g-s6-2", team1: "Illinois", team2: "TBD", time: "2:30 PM ET" },
+        { id: "b1g-s6-3", team1: "TBD", team2: "TBD", time: "7:00 PM ET" },
+        { id: "b1g-s6-4", team1: "TBD", team2: "TBD", time: "9:30 PM ET" }
+      ]},
+      { label: "Session 7 — Semifinals", date: "3/15", games: [
+        { id: "b1g-s7-1", team1: "TBD", team2: "TBD", time: "1:00 PM ET" },
+        { id: "b1g-s7-2", team1: "TBD", team2: "TBD", time: "3:30 PM ET" }
+      ]}
+    ]
+  },
+  acc: {
+    label: "ACC Men's Tournament", abbr: "ACC", venue: "Barclays Center, Brooklyn",
+    sessions: [
+      { label: "Quarterfinals", date: "3/13", games: [
+        { id: "acc-qf-1", team1: "Duke", team2: "TBD", time: "12:00 PM ET" },
+        { id: "acc-qf-2", team1: "North Carolina", team2: "TBD", time: "2:30 PM ET" },
+        { id: "acc-qf-3", team1: "Clemson", team2: "TBD", time: "7:00 PM ET" },
+        { id: "acc-qf-4", team1: "Virginia", team2: "TBD", time: "9:30 PM ET" }
+      ]},
+      { label: "Semifinals", date: "3/14", games: [
+        { id: "acc-sf-1", team1: "TBD", team2: "TBD", time: "7:00 PM ET" },
+        { id: "acc-sf-2", team1: "TBD", team2: "TBD", time: "9:30 PM ET" }
+      ]},
+      { label: "Championship", date: "3/15", games: [
+        { id: "acc-final", team1: "TBD", team2: "TBD", time: "8:00 PM ET" }
+      ]}
+    ]
+  },
+  big12: {
+    label: "Big 12 Men's Tournament", abbr: "B12", venue: "T-Mobile Center, Kansas City",
+    sessions: [
+      { label: "Quarterfinals", date: "3/13", games: [
+        { id: "b12-qf-1", team1: "Kansas", team2: "TBD", time: "12:00 PM ET" },
+        { id: "b12-qf-2", team1: "Iowa State", team2: "TBD", time: "2:30 PM ET" },
+        { id: "b12-qf-3", team1: "Houston", team2: "TBD", time: "7:00 PM ET" },
+        { id: "b12-qf-4", team1: "Baylor", team2: "TBD", time: "9:30 PM ET" }
+      ]},
+      { label: "Semifinals", date: "3/14", games: [
+        { id: "b12-sf-1", team1: "TBD", team2: "TBD", time: "6:00 PM ET" },
+        { id: "b12-sf-2", team1: "TBD", team2: "TBD", time: "8:30 PM ET" }
+      ]},
+      { label: "Championship", date: "3/15", games: [
+        { id: "b12-final", team1: "TBD", team2: "TBD", time: "6:00 PM ET" }
+      ]}
+    ]
+  },
+  sec: {
+    label: "SEC Men's Tournament", abbr: "SEC", venue: "Bridgestone Arena, Nashville",
+    sessions: [
+      { label: "Quarterfinals", date: "3/13", games: [
+        { id: "sec-qf-1", team1: "Auburn", team2: "TBD", time: "12:00 PM ET" },
+        { id: "sec-qf-2", team1: "Tennessee", team2: "TBD", time: "2:30 PM ET" },
+        { id: "sec-qf-3", team1: "Kentucky", team2: "TBD", time: "7:00 PM ET" },
+        { id: "sec-qf-4", team1: "Alabama", team2: "TBD", time: "9:30 PM ET" }
+      ]},
+      { label: "Semifinals", date: "3/14", games: [
+        { id: "sec-sf-1", team1: "TBD", team2: "TBD", time: "1:00 PM ET" },
+        { id: "sec-sf-2", team1: "TBD", team2: "TBD", time: "3:30 PM ET" }
+      ]},
+      { label: "Championship", date: "3/15", games: [
+        { id: "sec-final", team1: "TBD", team2: "TBD", time: "1:00 PM ET" }
+      ]}
+    ]
+  }
+};
+
+const state = {
+  monitoring: false, intervalMinutes: 5, spikeThreshold: 8,
+  pollTimer: null, countdownTimer: null, nextScanIn: 0,
+  games: {}, flags: {}, newlyConfirmed: new Set(),
+  pricing: {},    // gameId -> {getIn,avg,listings,face,source,lastUpdated}
+  openPrices: {}, // first-scan baseline
+  prevPrices: {}, // prior-scan baseline
+  sessionSpikes: 0, sessionDrops: 0,
+  activeTab: "bigten"
+};
+
+function initGames() {
+  Object.values(TOURNAMENTS).forEach(t =>
+    t.sessions.forEach(s =>
+      s.games.forEach(g => {
+        state.games[g.id] = { team1: g.team1, team2: g.team2, time: g.time };
+        state.pricing[g.id] = null;
+      })
+    )
+  );
+}
+
+const isTBD = id => { const g = state.games[id]; return g.team1 === "TBD" || g.team2 === "TBD"; };
+const countTBDs = key => TOURNAMENTS[key].sessions.reduce((a, s) => a + s.games.filter(g => isTBD(g.id)).length, 0);
+
+function updateTabBadges() {
+  Object.keys(TOURNAMENTS).forEach(k => {
+    const c = countTBDs(k), b = document.getElementById(`badge-${k}`);
+    b.textContent = c;
+    b.className = "tab-badge" + (c === 0 ? " all-clear" : "");
+  });
+}
+
+function updateSummaryBar() {
+  const ids = Object.keys(state.games);
+  document.getElementById("sum-tbds").textContent = ids.filter(id => isTBD(id)).length;
+  document.getElementById("sum-spikes").textContent = state.sessionSpikes;
+  document.getElementById("sum-drops").textContent = state.sessionDrops;
+  document.getElementById("sum-flags").textContent = Object.values(state.flags).filter(Boolean).length;
+
+  const priced = ids.filter(id => state.pricing[id] && state.openPrices[id]);
+  if (priced.length) {
+    const avg = priced.reduce((a, id) => {
+      const op = state.openPrices[id].getIn, cur = state.pricing[id].getIn;
+      return a + (op > 0 ? ((cur - op) / op) * 100 : 0);
+    }, 0) / priced.length;
+    const el = document.getElementById("sum-avg-move");
+    el.textContent = (avg >= 0 ? "+" : "") + avg.toFixed(1) + "%";
+    el.className = "s-value" + (avg > 1 ? " up" : avg < -1 ? " down" : "");
+  }
+
+  const aggCount = ids.filter(id => {
+    const s = computeSignal(id);
+    return s.cls === "sig-aggressive" || s.cls === "sig-lean";
+  }).length;
+  document.getElementById("sum-aggressive").textContent = aggCount;
+}
+
+function calcDelta(cur, prior) {
+  if (prior == null || prior <= 0 || cur == null) return null;
+  const diff = cur - prior;
+  return { diff, pct: (diff / prior) * 100 };
+}
+
+function fmtDelta(d) {
+  if (!d) return { text: "—", cls: "flat" };
+  const s = d.diff >= 0 ? "+" : "";
+  return {
+    text: `${s}$${Math.abs(d.diff).toFixed(0)} (${s}${d.pct.toFixed(1)}%)`,
+    cls: d.diff > 0.5 ? "up" : d.diff < -0.5 ? "down" : "flat"
+  };
+}
+
+function computeSignal(gameId) {
+  const p = state.pricing[gameId], op = state.openPrices[gameId], pp = state.prevPrices[gameId];
+  if (!p || p.getIn == null) return { signal: "AWAITING DATA", cls: "sig-pending", reason: "" };
+  const vsOpen = op ? calcDelta(p.getIn, op.getIn) : null;
+  const vsPrev = pp ? calcDelta(p.getIn, pp.getIn) : null;
+  let score = 0;
+  if (vsOpen) { if (vsOpen.pct > 5) score += 2; else if (vsOpen.pct > 2) score += 1; else if (vsOpen.pct < -5) score -= 2; else if (vsOpen.pct < -2) score -= 1; }
+  if (vsPrev) { if (vsPrev.pct > state.spikeThreshold / 2) score += 1; else if (vsPrev.pct < -(state.spikeThreshold / 2)) score -= 1; }
+  const listings = p.listings || 0;
+  if (listings > 0 && listings < 50) score += 1; else if (listings > 300) score -= 1;
+  if (score >= 3) return { signal: "GET AGGRESSIVE", cls: "sig-aggressive", reason: "prices rising, inventory tight" };
+  if (score >= 1) return { signal: "LEAN IN", cls: "sig-lean", reason: "mild upward pressure" };
+  if (score === 0) return { signal: "HOLD", cls: "sig-neutral", reason: "market stable" };
+  if (score === -1) return { signal: "WATCH", cls: "sig-cautious", reason: "softening demand" };
+  return { signal: "BACK OFF", cls: "sig-backoff", reason: "falling prices, oversupply" };
+}
+
+function buildGameCard(gameId) {
+  const g = state.games[gameId];
+  const p = state.pricing[gameId];
+  const op = state.openPrices[gameId], pp = state.prevPrices[gameId];
+  const flagged = state.flags[gameId] || false;
+  const isNew = state.newlyConfirmed.has(gameId);
+  const hasTBD = g.team1 === "TBD" || g.team2 === "TBD";
+
+  const vsPrev = p ? calcDelta(p.getIn, pp ? pp.getIn : null) : null;
+  const vsOpen = p ? calcDelta(p.getIn, op ? op.getIn : null) : null;
+  const vsOpenAvg = p ? calcDelta(p.avg, op ? op.avg : null) : null;
+  const isSpiking = vsPrev && vsPrev.pct >= state.spikeThreshold;
+  const isDropping = vsPrev && vsPrev.pct <= -state.spikeThreshold;
+  const sig = computeSignal(gameId);
+
+  let cardCls = "game-card";
+  if (hasTBD) cardCls += " has-tbd";
+  if (isNew) cardCls += " newly-confirmed";
+  if (flagged) cardCls += " high-risk";
+  if (isSpiking) cardCls += " price-spike-card";
+  else if (isDropping) cardCls += " price-drop-card";
+
+  let badges = "";
+  if (hasTBD) badges += `<span class="badge badge-tbd">TBD</span>`;
+  if (isNew) badges += `<span class="badge badge-new">JUST CONFIRMED</span>`;
+  if (!hasTBD && !isNew) badges += `<span class="badge badge-confirmed">CONFIRMED</span>`;
+  if (flagged) badges += `<span class="badge badge-risk">HIGH RISK</span>`;
+  if (isSpiking) badges += `<span class="badge badge-spike">PRICE SPIKE</span>`;
+  if (isDropping) badges += `<span class="badge badge-drop">PRICE DROP</span>`;
+  if (!p) badges += `<span class="badge badge-pending">PRICING PENDING</span>`;
+
+  const t1c = g.team1 === "TBD" ? "team tbd-team" : isNew ? "team newly-team" : "team";
+  const t2c = g.team2 === "TBD" ? "team tbd-team" : isNew ? "team newly-team" : "team";
+
+  const vsPrevFmt = fmtDelta(vsPrev);
+  const vsOpenFmt = fmtDelta(vsOpen);
+  const vsOpenAvgFmt = fmtDelta(vsOpenAvg);
+
+  let ticketHTML;
+  if (p) {
+    ticketHTML = `
+    <div class="ticket-block">
+      <div class="ticket-header">
+        <span class="ticket-source">SECONDARY MKT · ${p.source || "STUBHUB / SEATGEEK"}</span>
+        <span class="ticket-updated">${p.lastUpdated || ""}</span>
+      </div>
+      <div class="metrics-grid">
+        <div class="metric-cell">
+          <div class="metric-label">GET-IN</div>
+          <div class="metric-value">${p.getIn != null ? "$" + p.getIn : "—"}</div>
+          <div class="metric-delta ${vsPrevFmt.cls}">${vsPrev ? vsPrevFmt.text : "first scan"}</div>
+        </div>
+        <div class="metric-cell">
+          <div class="metric-label">AVG LISTING</div>
+          <div class="metric-value">${p.avg != null ? "$" + p.avg : "—"}</div>
+          <div class="metric-delta ${vsOpenAvgFmt.cls}">${vsOpen ? vsOpenAvgFmt.text : "vs open"}</div>
+        </div>
+        <div class="metric-cell">
+          <div class="metric-label">LISTINGS</div>
+          <div class="metric-value">${p.listings != null ? p.listings : "—"}</div>
+          <div class="metric-delta flat">available</div>
+        </div>
+        <div class="metric-cell">
+          <div class="metric-label">FACE VALUE</div>
+          <div class="metric-value">${p.face != null ? "$" + p.face : "—"}</div>
+          <div class="metric-delta flat">box office</div>
+        </div>
+      </div>
+      <div class="delta-row">
+        <div class="delta-cell">
+          <span class="delta-cell-label">VS LAST SCAN</span>
+          <span class="delta-cell-value ${vsPrevFmt.cls}">${vsPrevFmt.text}</span>
+        </div>
+        <div class="delta-cell">
+          <span class="delta-cell-label">VS SESSION OPEN</span>
+          <span class="delta-cell-value ${vsOpenFmt.cls}">${vsOpenFmt.text}</span>
+        </div>
+      </div>
+      <div class="aggression-bar">
+        <span class="aggression-label">SIGNAL</span>
+        <span class="aggression-signal ${sig.cls}">${sig.signal}</span>
+        <span class="aggression-reason">${sig.reason}</span>
+      </div>
+    </div>`;
+  } else {
+    ticketHTML = `
+    <div class="ticket-block">
+      <div class="ticket-header"><span class="ticket-source">SECONDARY MKT</span><span class="ticket-updated">—</span></div>
+      <div class="metrics-grid">
+        <div class="metric-cell"><div class="metric-label">GET-IN</div><div class="metric-value pending">—</div><div class="metric-delta flat">pending scan</div></div>
+        <div class="metric-cell"><div class="metric-label">AVG LISTING</div><div class="metric-value pending">—</div><div class="metric-delta flat">pending scan</div></div>
+        <div class="metric-cell"><div class="metric-label">LISTINGS</div><div class="metric-value pending">—</div><div class="metric-delta flat">pending scan</div></div>
+        <div class="metric-cell"><div class="metric-label">FACE VALUE</div><div class="metric-value pending">—</div><div class="metric-delta flat">pending scan</div></div>
+      </div>
+      <div class="delta-row">
+        <div class="delta-cell"><span class="delta-cell-label">VS LAST SCAN</span><span class="delta-cell-value flat">—</span></div>
+        <div class="delta-cell"><span class="delta-cell-label">VS SESSION OPEN</span><span class="delta-cell-value flat">—</span></div>
+      </div>
+      <div class="aggression-bar"><span class="aggression-label">SIGNAL</span><span class="aggression-signal sig-pending">AWAITING DATA</span><span class="aggression-reason"></span></div>
+    </div>`;
+  }
+
+  const card = document.createElement("div");
+  card.id = `card-${gameId}`;
+  card.className = cardCls;
+  card.innerHTML = `
+    <div class="card-top">
+      <span class="game-time">${g.time}</span>
+      <div class="card-actions">
+        <button class="flag-btn ${flagged ? "flagged" : ""}" title="${flagged ? "Unflag" : "Flag High Risk"}" onclick="toggleFlag('${gameId}')">⚑</button>
+      </div>
+    </div>
+    <div class="matchup-line">
+      <span class="${t1c}">${g.team1}</span><span class="vs-sep">VS</span><span class="${t2c}">${g.team2}</span>
+    </div>
+    <div class="status-badges">${badges}</div>
+    ${ticketHTML}`;
+  return card;
+}
+
+function dayFromDate(dateStr) {
+  const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const parts = dateStr.split("/");
+  const d = new Date(2026, parseInt(parts[0]) - 1, parseInt(parts[1]));
+  return days[d.getDay()];
+}
+
+function renderPanel(k) {
+  const tourney = TOURNAMENTS[k], panel = document.getElementById(`panel-${k}`);
+  panel.innerHTML = "";
+  tourney.sessions.forEach(session => {
+    const block = document.createElement("div"); block.className = "session-block";
+    const hdr = document.createElement("div"); hdr.className = "session-label";
+    hdr.innerHTML = `<span>${tourney.abbr}</span> ${session.label} <span class="session-date">${dayFromDate(session.date)} ${session.date}</span>`;
+    block.appendChild(hdr);
+    const grid = document.createElement("div"); grid.className = "games-grid";
+    session.games.forEach(gs => grid.appendChild(buildGameCard(gs.id)));
+    block.appendChild(grid); panel.appendChild(block);
+  });
+}
+
+function rerenderCard(id) {
+  const el = document.getElementById(`card-${id}`);
+  if (el) el.replaceWith(buildGameCard(id));
+}
+
+function renderAll() {
+  Object.keys(TOURNAMENTS).forEach(k => renderPanel(k));
+  updateTabBadges(); updateSummaryBar();
+}
+
+function switchTab(key) {
+  state.activeTab = key;
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+  document.getElementById(`tab-${key}`).classList.add("active");
+  document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+  document.getElementById(`panel-${key}`).classList.add("active");
+}
+
+function toggleFlag(id) {
+  state.flags[id] = !state.flags[id];
+  addLog((state.flags[id] ? "Flagged HIGH RISK: " : "Unflagged: ") + getLabel(id), state.flags[id] ? "warn" : "");
+  rerenderCard(id); updateSummaryBar();
+}
+
+function getLabel(id) { const g = state.games[id]; return `${g.team1} vs ${g.team2}`; }
+
+// MONITORING CORE
+function toggleMonitor() { state.monitoring ? stopMonitor() : startMonitor(); }
+
+function startMonitor() {
+  state.monitoring = true;
+  document.getElementById("monitor-btn").textContent = "STOP MONITOR";
+  document.getElementById("monitor-btn").classList.add("active");
+  document.getElementById("status-dot").classList.add("live");
+  document.getElementById("status-label").textContent = "LIVE";
+  document.getElementById("scan-line").classList.add("active");
+  addLog(`Monitoring started — ${state.intervalMinutes} min interval, ${state.spikeThreshold}% spike threshold`, "success");
+  runScan(); scheduleNext();
+}
+
+function stopMonitor() {
+  state.monitoring = false;
+  clearInterval(state.pollTimer); clearInterval(state.countdownTimer);
+  document.getElementById("monitor-btn").textContent = "START MONITOR";
+  document.getElementById("monitor-btn").classList.remove("active");
+  document.getElementById("status-dot").classList.remove("live");
+  document.getElementById("status-label").textContent = "IDLE";
+  document.getElementById("scan-line").classList.remove("active");
+  document.getElementById("next-scan-label").textContent = "";
+  addLog("Monitoring stopped.");
+}
+
+function scheduleNext() {
+  state.nextScanIn = state.intervalMinutes * 60;
+  clearInterval(state.countdownTimer); clearInterval(state.pollTimer);
+  state.countdownTimer = setInterval(() => {
+    state.nextScanIn--;
+    const m = Math.floor(state.nextScanIn / 60), s = String(state.nextScanIn % 60).padStart(2, "0");
+    document.getElementById("next-scan-label").textContent = `NEXT SCAN ${m}:${s}`;
+    if (state.nextScanIn <= 0) clearInterval(state.countdownTimer);
+  }, 1000);
+  state.pollTimer = setInterval(() => { runScan(); scheduleNext(); }, state.intervalMinutes * 60 * 1000);
+}
+
+function updateInterval() {
+  state.intervalMinutes = parseInt(document.getElementById("interval-select").value);
+  if (state.monitoring) { clearInterval(state.pollTimer); clearInterval(state.countdownTimer); scheduleNext(); addLog("Interval updated to " + state.intervalMinutes + " min."); }
+}
+function updateThreshold() {
+  state.spikeThreshold = parseInt(document.getElementById("threshold-select").value);
+  addLog("Spike threshold set to " + state.spikeThreshold + "%."); renderAll();
+}
+
+async function runScan() {
+  const indicator = document.getElementById("checking-indicator");
+  const scanBtn = document.getElementById("scan-btn");
+  indicator.classList.add("visible"); scanBtn.disabled = true; scanBtn.textContent = "SCANNING...";
+  addLog("Scan started — matchups + secondary market pricing...");
+
+  const tourneys = [
+    { key: "bigten", label: "Big Ten Men's Basketball Tournament 2026" },
+    { key: "acc",    label: "ACC Men's Basketball Tournament 2026" },
+    { key: "big12",  label: "Big 12 Men's Basketball Tournament 2026" },
+    { key: "sec",    label: "SEC Men's Basketball Tournament 2026" }
+  ];
+
+  for (const t of tourneys) {
+    await Promise.all([ checkMatchups(t.key, t.label), checkTicketPricing(t.key, t.label) ]);
+  }
+
+  document.getElementById("last-checked").textContent = "Last scan: " + new Date().toLocaleTimeString();
+  updateTabBadges(); updateSummaryBar(); renderAll();
+  addLog("Scan complete.", "success");
+  indicator.classList.remove("visible"); scanBtn.disabled = false; scanBtn.textContent = "MANUAL SCAN";
+}
+
+async function callClaude(systemPrompt, userPrompt) {
+  const resp = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 1200,
+      tools: [{ type: "web_search_20250305", name: "web_search" }],
+      system: systemPrompt,
+      messages: [{ role: "user", content: userPrompt }]
+    })
+  });
+  const data = await resp.json();
+  return data.content.filter(b => b.type === "text").map(b => b.text).join("");
+}
+
+async function checkMatchups(key, label) {
+  try {
+    const text = await callClaude(
+      `You are a sports data assistant. Search for the LATEST confirmed matchups for the ${label} March 13-15 2026. Return ONLY a valid JSON array, no markdown:\n[{"team1":"Michigan","team2":"Ohio State","session":"Quarterfinals","time":"12:00 PM ET"}]\nUse "TBD" for unconfirmed. Return [] if nothing found.`,
+      `Get the latest confirmed bracket matchups for the ${label} March 13-15 2026. JSON array only.`
+    );
+    const m = text.match(/\[[\s\S]*?\]/);
+    if (m) { let g = []; try { g = JSON.parse(m[0]); } catch(e) {} if (g.length) processMatchups(key, g); }
+  } catch(e) { addLog(`${TOURNAMENTS[key].abbr} matchup check failed: ${e.message}`, "warn"); }
+}
+
+async function checkTicketPricing(key, label) {
+  try {
+    const gamesList = TOURNAMENTS[key].sessions.flatMap(s =>
+      s.games.map(g => { const c = state.games[g.id]; return `${c.team1} vs ${c.team2} (${s.date} ${c.time})`; })
+    ).join("; ");
+
+    const text = await callClaude(
+      `You are a secondary ticket market analyst. Search StubHub, SeatGeek, and Ticketmaster for CURRENT ticket prices for college basketball tournament games. Return ONLY a valid JSON array, no markdown:\n[{"team1":"Kansas","team2":"Iowa State","getIn":95,"avg":155,"listings":180,"face":70,"source":"StubHub"}]\ngetIn=lowest available. avg=average listing. listings=total available. face=Ticketmaster face value. Use null for unavailable. Return [] if no data.`,
+      `Get current secondary market ticket prices from StubHub and SeatGeek for these ${label} games: ${gamesList}. Return JSON array only.`
+    );
+    const m = text.match(/\[[\s\S]*?\]/);
+    if (m) { let prices = []; try { prices = JSON.parse(m[0]); } catch(e) {} if (prices.length) processPricing(key, prices); }
+  } catch(e) { addLog(`${TOURNAMENTS[key].abbr} pricing check failed: ${e.message}`, "warn"); }
+}
+
+function processMatchups(key, incoming) {
+  const tourney = TOURNAMENTS[key];
+  incoming.forEach(inc => {
+    if (!inc.team1 || !inc.team2) return;
+    tourney.sessions.forEach(session => {
+      session.games.forEach(gs => {
+        const cur = state.games[gs.id];
+        const wasTBD1 = cur.team1 === "TBD", wasTBD2 = cur.team2 === "TBD";
+        if (!wasTBD1 && !wasTBD2) return;
+        const matchT1 = cur.team1.toLowerCase() === inc.team1.toLowerCase();
+        const matchT2 = cur.team2.toLowerCase() === inc.team2.toLowerCase();
+        const newT1 = inc.team1 !== "TBD", newT2 = inc.team2 !== "TBD";
+        const p1 = cur.team1, p2 = cur.team2;
+        if (matchT1 && wasTBD2 && newT2) { state.games[gs.id].team2 = inc.team2; state.newlyConfirmed.add(gs.id); fireMatchupAlert(key, gs.id, p1, p2, cur.team1, inc.team2); }
+        if (matchT2 && wasTBD1 && newT1) { state.games[gs.id].team1 = inc.team1; state.newlyConfirmed.add(gs.id); fireMatchupAlert(key, gs.id, p1, p2, inc.team1, cur.team2); }
+      });
+    });
+  });
+}
+
+function processPricing(key, priceData) {
+  const tourney = TOURNAMENTS[key];
+  priceData.forEach(pd => {
+    if (pd.getIn == null) return;
+    tourney.sessions.forEach(session => {
+      session.games.forEach(gs => {
+        const cur = state.games[gs.id];
+        const t1Match = cur.team1 !== "TBD" && ((pd.team1 || "").toLowerCase().includes(cur.team1.toLowerCase().split(" ")[0]) || cur.team1.toLowerCase().includes((pd.team1 || "").toLowerCase().split(" ")[0]));
+        if (!t1Match) return;
+        const prev = state.pricing[gs.id];
+        if (prev) state.prevPrices[gs.id] = { getIn: prev.getIn, avg: prev.avg };
+        if (!state.openPrices[gs.id]) {
+          state.openPrices[gs.id] = { getIn: pd.getIn, avg: pd.avg };
+          addLog(`${TOURNAMENTS[key].abbr} open price set: ${cur.team1} vs ${cur.team2} — get-in $${pd.getIn}`, "success");
+        }
+        state.pricing[gs.id] = { getIn: pd.getIn, avg: pd.avg, listings: pd.listings, face: pd.face, source: pd.source || "StubHub/SeatGeek", lastUpdated: new Date().toLocaleTimeString() };
+
+        if (prev && prev.getIn > 0) {
+          const chg = ((pd.getIn - prev.getIn) / prev.getIn) * 100;
+          if (chg >= state.spikeThreshold) { state.sessionSpikes++; firePriceAlert(key, gs.id, "spike", prev.getIn, pd.getIn, chg); }
+          else if (chg <= -state.spikeThreshold) { state.sessionDrops++; firePriceAlert(key, gs.id, "drop", prev.getIn, pd.getIn, chg); }
+          else if (Math.abs(chg) >= 2) addLog(`${TOURNAMENTS[key].abbr} ${cur.team1} vs ${cur.team2}: get-in ${chg > 0 ? "+" : ""}${chg.toFixed(1)}% ($${prev.getIn}→$${pd.getIn})`, chg > 0 ? "price-up" : "price-down");
+        }
+      });
+    });
+  });
+}
+
+function fireMatchupAlert(key, id, p1, p2, n1, n2) {
+  const msg = `${TOURNAMENTS[key].abbr}: ${n1} vs ${n2} confirmed (was: ${p1} vs ${p2})`;
+  addLog(msg, "success"); pushAlert(msg, "matchup", "NEW MATCHUP", key);
+}
+
+function firePriceAlert(key, id, type, prev, curr, pct) {
+  const g = state.games[id], dir = type === "spike" ? "▲" : "▼";
+  const msg = `${TOURNAMENTS[key].abbr} ${g.team1} vs ${g.team2}: ${dir} get-in ${pct > 0 ? "+" : ""}${pct.toFixed(1)}% ($${prev}→$${curr})`;
+  addLog(msg, type === "spike" ? "price-up" : "price-down");
+  pushAlert(msg, type === "spike" ? "price-spike" : "price-drop", type === "spike" ? "PRICE SPIKE" : "PRICE DROP", key);
+}
+
+function pushAlert(msg, cls, badge, key) {
+  const tray = document.getElementById("alert-tray"), el = document.createElement("div");
+  el.className = `alert-item ${cls}`;
+  el.innerHTML = `<span class="alert-badge">${badge}</span><span class="alert-text">${msg}</span><span class="alert-time">${new Date().toLocaleTimeString()}</span><button class="btn btn-ghost" style="font-size:10px;padding:3px 8px;" onclick="switchTab('${key}')">VIEW</button><span class="alert-close" onclick="this.parentElement.remove()">×</span>`;
+  tray.prepend(el);
+  setTimeout(() => { if (el.parentNode) el.remove(); }, 30000);
+}
+
+function addLog(msg, type = "") {
+  const log = document.getElementById("activity-log"), entry = document.createElement("div");
+  entry.className = "log-entry";
+  entry.innerHTML = `<div class="log-time">${new Date().toLocaleTimeString()}</div><div class="log-msg ${type}">${msg}</div>`;
+  log.prepend(entry);
+  while (log.children.length > 100) log.removeChild(log.lastChild);
+}
+
+function toggleLog() {
+  document.getElementById("activity-panel").classList.toggle("open");
+  document.getElementById("log-overlay").classList.toggle("open");
+}
+
+initGames(); renderAll();
+addLog("Dashboard loaded. 4 tournaments active — B1G, ACC, B12, SEC. Start monitor to begin.", "");
+</script>
+</body>
+</html>
