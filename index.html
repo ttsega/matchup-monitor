@@ -702,6 +702,10 @@ async function callClaude(systemPrompt, userPrompt) {
     })
   });
   const data = await resp.json();
+  if (!data || !data.content) {
+    const errMsg = data?.error?.message || data?.error?.type || JSON.stringify(data);
+    throw new Error("API error: " + errMsg);
+  }
   return data.content.filter(b => b.type === "text").map(b => b.text).join("");
 }
 
