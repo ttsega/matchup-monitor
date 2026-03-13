@@ -741,8 +741,7 @@ async function checkAllPricing(tourneys) {
         return s.label + " at " + TOURNAMENTS[t.key].venue + ": " + games;
       }).join("; ");
       return t.label + " — " + sessions;
-    }).join("
-");
+    }).join("\n");
 
     const text = await callClaude(
       `Search StubHub, SeatGeek and Vivid Seats for current ticket prices for college basketball tournaments. Return ONLY a JSON array: [{"tournament":"B1G","team1":"Michigan","team2":"Ohio State","getIn":95,"avg":155,"listings":180,"face":70,"source":"StubHub"}]. getIn=lowest price, avg=average, listings=count, face=face value. Use null if unavailable. Return [] if no data.`,
