@@ -37,8 +37,8 @@
   .btn-primary.active { background: var(--green); color: #000; }
   .btn-ghost { border-color: var(--border2); color: var(--text-muted); }
   .btn-ghost:hover { border-color: var(--text-muted); color: var(--text); }
-  select { font-family: var(--font-mono); font-size: 11px; background: var(--bg3); border: 1px solid var(--border2); color: var(--text-muted); padding: 5px 8px; border-radius: 3px; cursor: pointer; letter-spacing: 1px; text-transform: uppercase; }
-  .controls-label { font-family: var(--font-mono); font-size: 11px; color: var(--text-dim); letter-spacing: 1px; text-transform: uppercase; }
+  .btn-amber { border-color: var(--amber); color: var(--amber); }
+  .btn-amber:hover { background: var(--amber-dim); }
 
   .summary-bar { display: flex; background: var(--bg2); border-bottom: 1px solid var(--border); overflow-x: auto; }
   .summary-stat { padding: 8px 20px; border-right: 1px solid var(--border); display: flex; flex-direction: column; gap: 2px; min-width: 115px; }
@@ -50,14 +50,11 @@
 
   #alert-tray { padding: 0 20px; }
   .alert-item { display: flex; align-items: center; gap: 12px; border-radius: 3px; padding: 8px 14px; margin: 6px 0; font-family: var(--font-mono); font-size: 12px; animation: slideIn .3s ease; }
-  .alert-item.matchup { background: var(--green-dim); border: 1px solid var(--green-mid); }
+  .alert-item.signal-alert { background: var(--green-dim); border: 1px solid var(--green-mid); }
   .alert-item.price-spike { background: var(--amber-dim); border: 1px solid var(--amber-mid); }
   .alert-item.price-drop { background: var(--red-dim); border: 1px solid var(--red-mid); }
   @keyframes slideIn { from{transform:translateX(-10px);opacity:0} to{transform:translateX(0);opacity:1} }
   .alert-badge { font-weight: 600; text-transform: uppercase; font-size: 10px; letter-spacing: 1px; white-space: nowrap; }
-  .alert-item.matchup .alert-badge { color: var(--green); }
-  .alert-item.price-spike .alert-badge { color: var(--amber); }
-  .alert-item.price-drop .alert-badge { color: var(--red); }
   .alert-text { flex: 1; color: var(--text-muted); }
   .alert-time { color: var(--text-dim); font-size: 10px; }
   .alert-close { color: var(--text-dim); cursor: pointer; font-size: 18px; line-height: 1; margin-left: 4px; }
@@ -67,84 +64,62 @@
   .tab { font-family: var(--font-mono); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; padding: 12px 16px; cursor: pointer; border-bottom: 2px solid transparent; color: var(--text-dim); transition: all .15s; white-space: nowrap; }
   .tab:hover { color: var(--text-muted); }
   .tab.active { color: var(--teal); border-bottom-color: var(--teal); }
-  .tab-badge { display: inline-block; margin-left: 6px; padding: 1px 5px; border-radius: 8px; font-size: 9px; font-weight: 600; background: var(--amber-dim); color: var(--amber); vertical-align: middle; }
-  .tab-badge.all-clear { background: var(--green-dim); color: var(--green-mid); }
+  .tab-badge { display: inline-block; margin-left: 6px; padding: 1px 5px; border-radius: 8px; font-size: 9px; font-weight: 600; background: var(--bg4); color: var(--text-muted); vertical-align: middle; }
 
   .main { padding: 16px 20px; }
   .panel { display: none; }
   .panel.active { display: block; }
 
-  .session-block { margin-bottom: 24px; }
-  .session-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim); border-bottom: 1px solid var(--border); padding-bottom: 6px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
-  .session-label span { color: var(--text-muted); }
-  .session-label .session-date { margin-left: auto; }
+  .round-block { margin-bottom: 24px; }
+  .round-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim); border-bottom: 1px solid var(--border); padding-bottom: 6px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+  .round-label span { color: var(--text-muted); }
 
   .games-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 8px; }
   .game-card { background: var(--bg3); border: 1px solid var(--border); border-radius: 4px; padding: 12px 14px; transition: border-color .2s; position: relative; }
   .game-card:hover { border-color: var(--border2); }
-  .game-card.has-tbd { border-left: 3px solid var(--amber); }
-  .game-card.newly-confirmed { border-left: 3px solid var(--green); animation: flashGreen .8s ease; }
-  .game-card.high-risk { border-left: 3px solid var(--red); }
-  .game-card.price-spike-card { border-top: 2px solid var(--amber); }
-  .game-card.price-drop-card { border-top: 2px solid var(--red); }
-  @keyframes flashGreen { 0%,100%{background:var(--bg3)} 30%{background:#001a0a} }
+  .game-card.signal-aggressive { border-left: 3px solid var(--green); }
+  .game-card.signal-lean { border-left: 3px solid var(--green-mid); }
+  .game-card.signal-backoff { border-left: 3px solid var(--red); }
+  .game-card.signal-watch { border-left: 3px solid var(--amber); }
 
   .card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
   .game-time { font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); letter-spacing: 1px; }
-  .card-actions { display: flex; gap: 6px; align-items: center; }
+  .game-round-tag { font-family: var(--font-mono); font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--teal); }
   .matchup-line { font-family: var(--font-mono); font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
-  .team { max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .team { max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .vs-sep { color: var(--text-dim); font-size: 11px; font-weight: 400; }
   .tbd-team { color: var(--amber); }
-  .newly-team { color: var(--green); }
 
   .status-badges { display: flex; gap: 5px; margin-bottom: 10px; flex-wrap: wrap; }
   .badge { font-family: var(--font-mono); font-size: 9px; letter-spacing: 1px; text-transform: uppercase; padding: 2px 7px; border-radius: 2px; font-weight: 500; }
-  .badge-tbd { background: var(--amber-dim); color: var(--amber); border: 1px solid #5a3a00; }
-  .badge-confirmed { background: var(--green-dim); color: var(--green-mid); border: 1px solid #003a1f; }
-  .badge-new { background: var(--green); color: #000; animation: pulse 1.5s infinite; }
-  .badge-risk { background: var(--red-dim); color: var(--red); border: 1px solid #5a0a0a; }
-  .badge-spike { background: var(--amber-dim); color: var(--amber); border: 1px solid #5a3a00; }
-  .badge-drop { background: var(--red-dim); color: var(--red-mid); border: 1px solid #5a0a0a; }
+  .badge-aggressive { background: var(--green); color: #000; }
+  .badge-lean { background: var(--green-dim); color: var(--green); border: 1px solid var(--green-mid); }
+  .badge-hold { background: var(--bg4); color: var(--text-muted); border: 1px solid var(--border); }
+  .badge-watch { background: var(--amber-dim); color: var(--amber); border: 1px solid #5a3a00; }
+  .badge-backoff { background: var(--red-dim); color: var(--red); border: 1px solid #5a0a0a; }
   .badge-pending { background: var(--bg4); color: var(--text-dim); border: 1px solid var(--border); }
+  .badge-tv { background: var(--blue-dim); color: var(--blue); border: 1px solid #1a3a6a; }
 
-  .flag-btn { width: 24px; height: 24px; border-radius: 3px; border: 1px solid var(--border2); background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .15s; font-size: 13px; }
-  .flag-btn:hover { border-color: var(--red); }
-  .flag-btn.flagged { background: var(--red-dim); border-color: var(--red); }
-
-  /* TICKET BLOCK */
   .ticket-block { border-top: 1px solid var(--border); margin-top: 10px; padding-top: 10px; }
   .ticket-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
   .ticket-source { font-family: var(--font-mono); font-size: 9px; color: var(--text-dim); letter-spacing: 1px; text-transform: uppercase; }
-  .ticket-updated { font-family: var(--font-mono); font-size: 9px; color: var(--text-dim); }
 
   .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
   .metric-cell { background: var(--bg4); border-radius: 3px; padding: 7px 8px; }
   .metric-label { font-family: var(--font-mono); font-size: 8px; color: var(--text-dim); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 3px; }
   .metric-value { font-family: var(--font-mono); font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.2; }
   .metric-value.pending { color: var(--text-dim); font-size: 10px; }
-  .metric-delta { font-family: var(--font-mono); font-size: 9px; margin-top: 2px; }
-  .metric-delta.up { color: var(--green-mid); }
-  .metric-delta.down { color: var(--red); }
-  .metric-delta.flat { color: var(--text-dim); }
-
-  .delta-row { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 5px; }
-  .delta-cell { background: var(--bg4); border-radius: 3px; padding: 6px 8px; display: flex; align-items: center; justify-content: space-between; }
-  .delta-cell-label { font-family: var(--font-mono); font-size: 8px; color: var(--text-dim); letter-spacing: 1px; text-transform: uppercase; }
-  .delta-cell-value { font-family: var(--font-mono); font-size: 11px; font-weight: 600; }
-  .delta-cell-value.up { color: var(--green); }
-  .delta-cell-value.down { color: var(--red); }
-  .delta-cell-value.flat { color: var(--text-dim); }
+  .metric-sub { font-family: var(--font-mono); font-size: 9px; color: var(--text-dim); margin-top: 2px; }
 
   .aggression-bar { margin-top: 6px; background: var(--bg4); border-radius: 3px; padding: 7px 10px; display: flex; align-items: center; gap: 10px; }
   .aggression-label { font-family: var(--font-mono); font-size: 8px; color: var(--text-dim); letter-spacing: 1px; text-transform: uppercase; white-space: nowrap; }
   .aggression-signal { font-family: var(--font-mono); font-size: 11px; font-weight: 600; }
   .sig-aggressive { color: var(--green); }
   .sig-lean { color: var(--green-mid); }
-  .sig-neutral { color: var(--text-muted); }
-  .sig-cautious { color: var(--amber); }
+  .sig-hold { color: var(--text-muted); }
+  .sig-watch { color: var(--amber); }
   .sig-backoff { color: var(--red); }
-  .sig-pending { color: var(--text-dim); font-size: 10px; }
+  .sig-pending { color: var(--text-dim); }
   .aggression-reason { font-family: var(--font-mono); font-size: 9px; color: var(--text-dim); margin-left: auto; }
 
   .scan-line { pointer-events: none; position: fixed; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--teal), transparent); animation: scan 3s linear infinite; opacity: 0; transition: opacity .3s; }
@@ -162,16 +137,17 @@
   .log-msg { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); line-height: 1.4; }
   .log-msg.success { color: var(--green-mid); }
   .log-msg.warn { color: var(--amber); }
-  .log-msg.price-up { color: var(--green); }
-  .log-msg.price-down { color: var(--red); }
-
-  #log-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 190; }
-  #log-overlay.open { display: block; }
 
   .checking-indicator { font-family: var(--font-mono); font-size: 11px; color: var(--teal); letter-spacing: 1px; display: none; align-items: center; gap: 6px; }
   .checking-indicator.visible { display: flex; }
   .spin { display: inline-block; width: 10px; height: 10px; border: 1.5px solid var(--teal); border-top-color: transparent; border-radius: 50%; animation: spin .8s linear infinite; }
   @keyframes spin { to{transform:rotate(360deg)} }
+
+  #log-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 190; }
+  #log-overlay.open { display: block; }
+
+  .empty-state { text-align: center; padding: 60px 20px; }
+  .empty-state-msg { font-family: var(--font-mono); font-size: 12px; color: var(--text-dim); letter-spacing: 1px; }
 
   ::-webkit-scrollbar { width: 4px; height: 4px; }
   ::-webkit-scrollbar-track { background: var(--bg); }
@@ -183,7 +159,7 @@
 <!-- PASSWORD GATE -->
 <div id="pw-gate" style="position:fixed;inset:0;background:#07090f;display:flex;align-items:center;justify-content:center;z-index:9999;">
   <div style="text-align:center;">
-    <div style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:#00e676;letter-spacing:3px;text-transform:uppercase;margin-bottom:32px;">▸ Matchup Monitor</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:#00e676;letter-spacing:3px;text-transform:uppercase;margin-bottom:32px;">&#9656; Matchup Monitor</div>
     <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#3a4f65;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;">Access Code</div>
     <input id="pw-input" type="password" placeholder="enter code"
       style="font-family:'IBM Plex Mono',monospace;font-size:13px;background:#0d1117;border:1px solid #2a3a50;color:#c8d6e8;padding:10px 16px;border-radius:3px;outline:none;width:220px;text-align:center;letter-spacing:2px;"
@@ -202,79 +178,56 @@
 
 <div class="topbar">
   <div class="topbar-left">
-    <span class="logo">▸ Matchup Monitor</span>
+    <span class="logo">&#9656; Matchup Monitor</span>
     <span class="status-dot" id="status-dot"></span>
-    <span class="status-label" id="status-label">IDLE</span>
+    <span class="status-label" id="status-label">CONNECTING</span>
   </div>
   <div class="topbar-right">
     <span class="checking-indicator" id="checking-indicator"><span class="spin"></span>SCANNING...</span>
-    <span class="last-checked" id="last-checked">—</span>
+    <span class="last-checked" id="last-checked">&mdash;</span>
     <button class="btn btn-ghost" onclick="toggleLog()">LOG</button>
   </div>
 </div>
 
 <div class="controls-bar">
-  <button class="btn btn-primary" id="monitor-btn" onclick="toggleMonitor()">START MONITOR</button>
-  <button class="btn btn-ghost" onclick="runScan()" id="scan-btn">MANUAL SCAN</button>
-  <span class="controls-label">INTERVAL:</span>
-  <select id="interval-select" onchange="updateInterval()">
-    <option value="2">2 MIN</option>
-    <option value="5" selected>5 MIN</option>
-    <option value="10">10 MIN</option>
-    <option value="15">15 MIN</option>
-  </select>
-  <span class="controls-label" style="margin-left:10px;">SPIKE ALERT:</span>
-  <select id="threshold-select" onchange="updateThreshold()">
-    <option value="5">5%</option>
-    <option value="8" selected>8%</option>
-    <option value="10">10%</option>
-    <option value="15">15%</option>
-  </select>
+  <button class="btn btn-primary" onclick="triggerScan()" id="scan-btn">MANUAL SCAN</button>
+  <button class="btn btn-amber" onclick="triggerPopulate()" id="populate-btn">POPULATE BRACKET</button>
   <span style="flex:1"></span>
-  <span class="controls-label" id="next-scan-label"></span>
+  <span class="last-checked" id="games-count">&mdash;</span>
 </div>
 
 <div class="summary-bar">
-  <div class="summary-stat"><span class="s-label">TBDs Remaining</span><span class="s-value" id="sum-tbds">—</span><span class="s-sub">all tournaments</span></div>
-  <div class="summary-stat"><span class="s-label">Price Spikes</span><span class="s-value up" id="sum-spikes">0</span><span class="s-sub">this session</span></div>
-  <div class="summary-stat"><span class="s-label">Price Drops</span><span class="s-value down" id="sum-drops">0</span><span class="s-sub">this session</span></div>
-  <div class="summary-stat"><span class="s-label">Flagged</span><span class="s-value" id="sum-flags">0</span><span class="s-sub">high risk games</span></div>
-  <div class="summary-stat"><span class="s-label">Avg Get-In Move</span><span class="s-value" id="sum-avg-move">—</span><span class="s-sub">vs session open</span></div>
-  <div class="summary-stat"><span class="s-label">Aggressive Signals</span><span class="s-value up" id="sum-aggressive">0</span><span class="s-sub">games signaling</span></div>
+  <div class="summary-stat"><span class="s-label">Total Games</span><span class="s-value" id="sum-total">&mdash;</span><span class="s-sub">NCAA Tournament</span></div>
+  <div class="summary-stat"><span class="s-label">With Pricing</span><span class="s-value up" id="sum-priced">0</span><span class="s-sub">have ticket data</span></div>
+  <div class="summary-stat"><span class="s-label">Aggressive</span><span class="s-value up" id="sum-aggressive">0</span><span class="s-sub">lean in + get aggressive</span></div>
+  <div class="summary-stat"><span class="s-label">Watch / Back Off</span><span class="s-value down" id="sum-caution">0</span><span class="s-sub">caution signals</span></div>
+  <div class="summary-stat"><span class="s-label">WebSocket</span><span class="s-value" id="sum-ws">&#9679;</span><span class="s-sub" id="sum-ws-label">connecting</span></div>
 </div>
 
 <div id="alert-tray"></div>
 
-<div class="tabs">
-  <div class="tab active" onclick="switchTab('bigten')" id="tab-bigten">Big Ten Men's <span class="tab-badge" id="badge-bigten">0</span></div>
-  <div class="tab" onclick="switchTab('acc')" id="tab-acc">ACC <span class="tab-badge" id="badge-acc">0</span></div>
-  <div class="tab" onclick="switchTab('big12')" id="tab-big12">Big 12 <span class="tab-badge" id="badge-big12">0</span></div>
-  <div class="tab" onclick="switchTab('sec')" id="tab-sec">SEC <span class="tab-badge" id="badge-sec">0</span></div>
-</div>
+<div class="tabs" id="tabs-container"></div>
 
-<div class="main">
-  <div class="panel active" id="panel-bigten"></div>
-  <div class="panel" id="panel-acc"></div>
-  <div class="panel" id="panel-big12"></div>
-  <div class="panel" id="panel-sec"></div>
-</div>
+<div class="main" id="main-container"></div>
 
 <div id="log-overlay" onclick="toggleLog()"></div>
 <div class="activity-panel" id="activity-panel">
-  <div class="activity-header">Activity Log <span class="activity-close" onclick="toggleLog()">×</span></div>
+  <div class="activity-header">Activity Log <span class="activity-close" onclick="toggleLog()">&#215;</span></div>
   <div class="activity-log" id="activity-log">
-    <div class="log-entry"><div class="log-msg">Monitor initialized.</div></div>
+    <div class="log-entry"><div class="log-msg">Dashboard initialized.</div></div>
   </div>
 </div>
 
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 <script>
-const API_KEY = "";
 const ACCESS_PW = "pre_tourney26";
+const API_BASE = "https://matchup-monitor-backend-production.up.railway.app";
 
 function checkPW() {
   const val = document.getElementById("pw-input").value;
   if (val === ACCESS_PW) {
     document.getElementById("pw-gate").style.display = "none";
+    init();
   } else {
     const err = document.getElementById("pw-error");
     err.textContent = "INCORRECT CODE";
@@ -284,603 +237,400 @@ function checkPW() {
   }
 }
 
-const TOURNAMENTS = {
-  bigten: {
-    label: "Big Ten Men's Tournament", abbr: "B1G", venue: "Gainbridge Fieldhouse, Indianapolis",
-    sessions: [
-      { label: "Session 5 — Quarterfinals", date: "3/13", games: [
-        { id: "b1g-s5-1", team1: "Indiana", team2: "TBD", time: "12:00 PM ET" },
-        { id: "b1g-s5-2", team1: "Purdue", team2: "TBD", time: "2:30 PM ET" },
-        { id: "b1g-s5-3", team1: "Ohio State", team2: "TBD", time: "7:00 PM ET" },
-        { id: "b1g-s5-4", team1: "Wisconsin", team2: "TBD", time: "9:30 PM ET" }
-      ]},
-      { label: "Session 6 — Quarterfinals", date: "3/14", games: [
-        { id: "b1g-s6-1", team1: "Michigan", team2: "TBD", time: "12:00 PM ET" },
-        { id: "b1g-s6-2", team1: "Illinois", team2: "TBD", time: "2:30 PM ET" },
-        { id: "b1g-s6-3", team1: "TBD", team2: "TBD", time: "7:00 PM ET" },
-        { id: "b1g-s6-4", team1: "TBD", team2: "TBD", time: "9:30 PM ET" }
-      ]},
-      { label: "Session 7 — Semifinals", date: "3/15", games: [
-        { id: "b1g-s7-1", team1: "TBD", team2: "TBD", time: "1:00 PM ET" },
-        { id: "b1g-s7-2", team1: "TBD", team2: "TBD", time: "3:30 PM ET" }
-      ]}
-    ]
-  },
-  acc: {
-    label: "ACC Men's Tournament", abbr: "ACC", venue: "Barclays Center, Brooklyn",
-    sessions: [
-      { label: "Quarterfinals", date: "3/13", games: [
-        { id: "acc-qf-1", team1: "Duke", team2: "TBD", time: "12:00 PM ET" },
-        { id: "acc-qf-2", team1: "North Carolina", team2: "TBD", time: "2:30 PM ET" },
-        { id: "acc-qf-3", team1: "Clemson", team2: "TBD", time: "7:00 PM ET" },
-        { id: "acc-qf-4", team1: "Virginia", team2: "TBD", time: "9:30 PM ET" }
-      ]},
-      { label: "Semifinals", date: "3/14", games: [
-        { id: "acc-sf-1", team1: "TBD", team2: "TBD", time: "7:00 PM ET" },
-        { id: "acc-sf-2", team1: "TBD", team2: "TBD", time: "9:30 PM ET" }
-      ]},
-      { label: "Championship", date: "3/15", games: [
-        { id: "acc-final", team1: "TBD", team2: "TBD", time: "8:00 PM ET" }
-      ]}
-    ]
-  },
-  big12: {
-    label: "Big 12 Men's Tournament", abbr: "B12", venue: "T-Mobile Center, Kansas City",
-    sessions: [
-      { label: "Quarterfinals", date: "3/13", games: [
-        { id: "b12-qf-1", team1: "Kansas", team2: "TBD", time: "12:00 PM ET" },
-        { id: "b12-qf-2", team1: "Iowa State", team2: "TBD", time: "2:30 PM ET" },
-        { id: "b12-qf-3", team1: "Houston", team2: "TBD", time: "7:00 PM ET" },
-        { id: "b12-qf-4", team1: "Baylor", team2: "TBD", time: "9:30 PM ET" }
-      ]},
-      { label: "Semifinals", date: "3/14", games: [
-        { id: "b12-sf-1", team1: "TBD", team2: "TBD", time: "6:00 PM ET" },
-        { id: "b12-sf-2", team1: "TBD", team2: "TBD", time: "8:30 PM ET" }
-      ]},
-      { label: "Championship", date: "3/15", games: [
-        { id: "b12-final", team1: "TBD", team2: "TBD", time: "6:00 PM ET" }
-      ]}
-    ]
-  },
-  sec: {
-    label: "SEC Men's Tournament", abbr: "SEC", venue: "Bridgestone Arena, Nashville",
-    sessions: [
-      { label: "Quarterfinals", date: "3/13", games: [
-        { id: "sec-qf-1", team1: "Auburn", team2: "TBD", time: "12:00 PM ET" },
-        { id: "sec-qf-2", team1: "Tennessee", team2: "TBD", time: "2:30 PM ET" },
-        { id: "sec-qf-3", team1: "Kentucky", team2: "TBD", time: "7:00 PM ET" },
-        { id: "sec-qf-4", team1: "Alabama", team2: "TBD", time: "9:30 PM ET" }
-      ]},
-      { label: "Semifinals", date: "3/14", games: [
-        { id: "sec-sf-1", team1: "TBD", team2: "TBD", time: "1:00 PM ET" },
-        { id: "sec-sf-2", team1: "TBD", team2: "TBD", time: "3:30 PM ET" }
-      ]},
-      { label: "Championship", date: "3/15", games: [
-        { id: "sec-final", team1: "TBD", team2: "TBD", time: "1:00 PM ET" }
-      ]}
-    ]
-  }
-};
-
+// ── State ──
 const state = {
-  monitoring: false, intervalMinutes: 5, spikeThreshold: 8,
-  pollTimer: null, countdownTimer: null, nextScanIn: 0,
-  games: {}, flags: {}, newlyConfirmed: new Set(),
-  pricing: {},    // gameId -> {getIn,avg,listings,face,source,lastUpdated}
-  openPrices: {}, // first-scan baseline
-  prevPrices: {}, // prior-scan baseline
-  sessionSpikes: 0, sessionDrops: 0,
-  activeTab: "bigten"
+  games: {},       // gameId -> latest row from /games
+  signals: {},     // gameId -> latest signal
+  activeTab: null,
+  socket: null,
 };
 
-function initGames() {
-  Object.values(TOURNAMENTS).forEach(t =>
-    t.sessions.forEach(s =>
-      s.games.forEach(g => {
-        state.games[g.id] = { team1: g.team1, team2: g.team2, time: g.time };
-        state.pricing[g.id] = null;
-      })
-    )
-  );
+// ── Signal config ──
+const SIGNAL_CONFIG = {
+  GET_AGGRESSIVE: { label: "GET AGGRESSIVE", cls: "sig-aggressive", badge: "badge-aggressive", card: "signal-aggressive" },
+  LEAN_IN:        { label: "LEAN IN",        cls: "sig-lean",       badge: "badge-lean",       card: "signal-lean" },
+  HOLD:           { label: "HOLD",           cls: "sig-hold",       badge: "badge-hold",       card: "" },
+  WATCH:          { label: "WATCH",          cls: "sig-watch",      badge: "badge-watch",      card: "signal-watch" },
+  BACK_OFF:       { label: "BACK OFF",       cls: "sig-backoff",    badge: "badge-backoff",    card: "signal-backoff" },
+};
+
+// ── API ──
+async function fetchGames() {
+  const resp = await fetch(API_BASE + "/games");
+  if (!resp.ok) throw new Error("GET /games failed: " + resp.status);
+  return resp.json();
 }
 
-const isTBD = id => { const g = state.games[id]; return g.team1 === "TBD" || g.team2 === "TBD"; };
-const countTBDs = key => TOURNAMENTS[key].sessions.reduce((a, s) => a + s.games.filter(g => isTBD(g.id)).length, 0);
+async function fetchSignals() {
+  const resp = await fetch(API_BASE + "/signals");
+  if (!resp.ok) throw new Error("GET /signals failed: " + resp.status);
+  return resp.json();
+}
 
-function updateTabBadges() {
-  Object.keys(TOURNAMENTS).forEach(k => {
-    const c = countTBDs(k), b = document.getElementById(`badge-${k}`);
-    b.textContent = c;
-    b.className = "tab-badge" + (c === 0 ? " all-clear" : "");
+async function triggerScan() {
+  const btn = document.getElementById("scan-btn");
+  const indicator = document.getElementById("checking-indicator");
+  btn.disabled = true; btn.textContent = "SCANNING...";
+  indicator.classList.add("visible");
+  addLog("Manual scan triggered...");
+  try {
+    const resp = await fetch(API_BASE + "/health/scan", { method: "POST" });
+    const data = await resp.json();
+    if (resp.ok) {
+      addLog("Scan complete: " + data.gamesScanned + " games in " + data.elapsedMs + "ms", "success");
+      await loadData();
+    } else {
+      addLog("Scan failed: " + (data.error || resp.status), "warn");
+    }
+  } catch (e) { addLog("Scan error: " + e.message, "warn"); }
+  finally { btn.disabled = false; btn.textContent = "MANUAL SCAN"; indicator.classList.remove("visible"); }
+}
+
+async function triggerPopulate() {
+  const btn = document.getElementById("populate-btn");
+  btn.disabled = true; btn.textContent = "POPULATING...";
+  addLog("Populating tournament bracket from ESPN...");
+  try {
+    const resp = await fetch(API_BASE + "/admin/populate-tournament", { method: "POST" });
+    const data = await resp.json();
+    if (resp.ok) {
+      addLog("Populate done: " + data.inserted + " inserted, " + data.updated + " updated", "success");
+      await loadData();
+    } else {
+      addLog("Populate failed: " + (data.error || resp.status), "warn");
+    }
+  } catch (e) { addLog("Populate error: " + e.message, "warn"); }
+  finally { btn.disabled = false; btn.textContent = "POPULATE BRACKET"; }
+}
+
+// ── WebSocket ──
+function connectWS() {
+  const socket = io(API_BASE, { transports: ["websocket", "polling"] });
+  state.socket = socket;
+
+  socket.on("connect", () => {
+    document.getElementById("status-dot").classList.add("live");
+    document.getElementById("status-label").textContent = "LIVE";
+    document.getElementById("scan-line").classList.add("active");
+    document.getElementById("sum-ws").style.color = "var(--green)";
+    document.getElementById("sum-ws-label").textContent = "connected";
+    addLog("WebSocket connected", "success");
+  });
+
+  socket.on("disconnect", () => {
+    document.getElementById("status-dot").classList.remove("live");
+    document.getElementById("status-label").textContent = "DISCONNECTED";
+    document.getElementById("scan-line").classList.remove("active");
+    document.getElementById("sum-ws").style.color = "var(--red)";
+    document.getElementById("sum-ws-label").textContent = "disconnected";
+    addLog("WebSocket disconnected", "warn");
+  });
+
+  socket.on("snapshot:new", (snapshot) => {
+    const id = snapshot.gameId || snapshot.game_id;
+    if (!id) return;
+    // Merge into state (normalize snake_case from DB)
+    state.games[id] = normalizeGame(snapshot);
+    rerenderCard(id);
+    updateSummary();
+    document.getElementById("last-checked").textContent = "Updated: " + new Date().toLocaleTimeString();
+  });
+
+  socket.on("signal:new", (data) => {
+    const id = data.gameId || data.game_id;
+    if (!id) return;
+    state.signals[id] = normalizeSignal(data);
+    rerenderCard(id);
+    updateSummary();
+    const sig = SIGNAL_CONFIG[data.signal] || SIGNAL_CONFIG.HOLD;
+    const game = state.games[id];
+    const label = game ? game.game : id;
+    if (data.signal === "GET_AGGRESSIVE" || data.signal === "LEAN_IN") {
+      pushAlert(sig.label + ": " + label, "signal-alert", sig.label);
+    }
+    addLog("Signal " + sig.label + " for " + label + " (composite: " + (data.composite || 0).toFixed(2) + ")", "success");
   });
 }
 
-function updateSummaryBar() {
-  const ids = Object.keys(state.games);
-  document.getElementById("sum-tbds").textContent = ids.filter(id => isTBD(id)).length;
-  document.getElementById("sum-spikes").textContent = state.sessionSpikes;
-  document.getElementById("sum-drops").textContent = state.sessionDrops;
-  document.getElementById("sum-flags").textContent = Object.values(state.flags).filter(Boolean).length;
-
-  const priced = ids.filter(id => state.pricing[id] && state.openPrices[id]);
-  if (priced.length) {
-    const avg = priced.reduce((a, id) => {
-      const op = state.openPrices[id].getIn, cur = state.pricing[id].getIn;
-      return a + (op > 0 ? ((cur - op) / op) * 100 : 0);
-    }, 0) / priced.length;
-    const el = document.getElementById("sum-avg-move");
-    el.textContent = (avg >= 0 ? "+" : "") + avg.toFixed(1) + "%";
-    el.className = "s-value" + (avg > 1 ? " up" : avg < -1 ? " down" : "");
-  }
-
-  const aggCount = ids.filter(id => {
-    const s = computeSignal(id);
-    return s.cls === "sig-aggressive" || s.cls === "sig-lean";
-  }).length;
-  document.getElementById("sum-aggressive").textContent = aggCount;
-}
-
-function calcDelta(cur, prior) {
-  if (prior == null || prior <= 0 || cur == null) return null;
-  const diff = cur - prior;
-  return { diff, pct: (diff / prior) * 100 };
-}
-
-function fmtDelta(d) {
-  if (!d) return { text: "—", cls: "flat" };
-  const s = d.diff >= 0 ? "+" : "";
+// ── Normalize DB rows (snake_case) to camelCase ──
+function normalizeGame(row) {
   return {
-    text: `${s}$${Math.abs(d.diff).toFixed(0)} (${s}${d.pct.toFixed(1)}%)`,
-    cls: d.diff > 0.5 ? "up" : d.diff < -0.5 ? "down" : "flat"
+    gameId: row.gameId || row.game_id,
+    tournament: row.tournament,
+    game: row.game,
+    gameTime: row.gameTime || row.game_time,
+    minutesToGame: row.minutesToGame ?? row.minutes_to_game,
+    getIn: row.getIn ?? row.get_in ?? null,
+    avgListing: row.avgListing ?? row.avg_listing ?? null,
+    listingCount: row.listingCount ?? row.listing_count ?? null,
+    faceValue: row.faceValue ?? row.face_value ?? null,
+    homeProbability: row.homeProbability ?? row.home_probability ?? null,
+    awayProbability: row.awayProbability ?? row.away_probability ?? null,
+    isNationalTV: row.isNationalTV ?? row.is_national_tv ?? false,
+    googleTrend: row.googleTrend ?? row.google_trend ?? null,
   };
 }
 
-function computeSignal(gameId) {
-  const p = state.pricing[gameId], op = state.openPrices[gameId], pp = state.prevPrices[gameId];
-  if (!p || p.getIn == null) return { signal: "AWAITING DATA", cls: "sig-pending", reason: "" };
-  const vsOpen = op ? calcDelta(p.getIn, op.getIn) : null;
-  const vsPrev = pp ? calcDelta(p.getIn, pp.getIn) : null;
-  let score = 0;
-  if (vsOpen) { if (vsOpen.pct > 5) score += 2; else if (vsOpen.pct > 2) score += 1; else if (vsOpen.pct < -5) score -= 2; else if (vsOpen.pct < -2) score -= 1; }
-  if (vsPrev) { if (vsPrev.pct > state.spikeThreshold / 2) score += 1; else if (vsPrev.pct < -(state.spikeThreshold / 2)) score -= 1; }
-  const listings = p.listings || 0;
-  if (listings > 0 && listings < 50) score += 1; else if (listings > 300) score -= 1;
-  if (score >= 3) return { signal: "GET AGGRESSIVE", cls: "sig-aggressive", reason: "prices rising, inventory tight" };
-  if (score >= 1) return { signal: "LEAN IN", cls: "sig-lean", reason: "mild upward pressure" };
-  if (score === 0) return { signal: "HOLD", cls: "sig-neutral", reason: "market stable" };
-  if (score === -1) return { signal: "WATCH", cls: "sig-cautious", reason: "softening demand" };
-  return { signal: "BACK OFF", cls: "sig-backoff", reason: "falling prices, oversupply" };
+function normalizeSignal(row) {
+  return {
+    signal: row.signal,
+    composite: row.composite,
+    confidence: row.confidence,
+    ticketScore: row.ticketScore ?? row.ticket_score ?? null,
+    kalshiScore: row.kalshiScore ?? row.kalshi_score ?? null,
+    contextScore: row.contextScore ?? row.context_score ?? null,
+    narrative: row.narrative ?? null,
+    firedAt: row.firedAt || row.fired_at,
+  };
 }
 
-function buildGameCard(gameId) {
-  const g = state.games[gameId];
-  const p = state.pricing[gameId];
-  const op = state.openPrices[gameId], pp = state.prevPrices[gameId];
-  const flagged = state.flags[gameId] || false;
-  const isNew = state.newlyConfirmed.has(gameId);
-  const hasTBD = g.team1 === "TBD" || g.team2 === "TBD";
-
-  const vsPrev = p ? calcDelta(p.getIn, pp ? pp.getIn : null) : null;
-  const vsOpen = p ? calcDelta(p.getIn, op ? op.getIn : null) : null;
-  const vsOpenAvg = p ? calcDelta(p.avg, op ? op.avg : null) : null;
-  const isSpiking = vsPrev && vsPrev.pct >= state.spikeThreshold;
-  const isDropping = vsPrev && vsPrev.pct <= -state.spikeThreshold;
-  const sig = computeSignal(gameId);
-
-  let cardCls = "game-card";
-  if (hasTBD) cardCls += " has-tbd";
-  if (isNew) cardCls += " newly-confirmed";
-  if (flagged) cardCls += " high-risk";
-  if (isSpiking) cardCls += " price-spike-card";
-  else if (isDropping) cardCls += " price-drop-card";
-
-  let badges = "";
-  if (hasTBD) badges += `<span class="badge badge-tbd">TBD</span>`;
-  if (isNew) badges += `<span class="badge badge-new">JUST CONFIRMED</span>`;
-  if (!hasTBD && !isNew) badges += `<span class="badge badge-confirmed">CONFIRMED</span>`;
-  if (flagged) badges += `<span class="badge badge-risk">HIGH RISK</span>`;
-  if (isSpiking) badges += `<span class="badge badge-spike">PRICE SPIKE</span>`;
-  if (isDropping) badges += `<span class="badge badge-drop">PRICE DROP</span>`;
-  if (!p) badges += `<span class="badge badge-pending">PRICING PENDING</span>`;
-
-  const t1c = g.team1 === "TBD" ? "team tbd-team" : isNew ? "team newly-team" : "team";
-  const t2c = g.team2 === "TBD" ? "team tbd-team" : isNew ? "team newly-team" : "team";
-
-  const vsPrevFmt = fmtDelta(vsPrev);
-  const vsOpenFmt = fmtDelta(vsOpen);
-  const vsOpenAvgFmt = fmtDelta(vsOpenAvg);
-
-  let ticketHTML;
-  if (p) {
-    ticketHTML = `
-    <div class="ticket-block">
-      <div class="ticket-header">
-        <span class="ticket-source">SECONDARY MKT · ${p.source || "STUBHUB / SEATGEEK"}</span>
-        <span class="ticket-updated">${p.lastUpdated || ""}</span>
-      </div>
-      <div class="metrics-grid">
-        <div class="metric-cell">
-          <div class="metric-label">GET-IN</div>
-          <div class="metric-value">${p.getIn != null ? "$" + p.getIn : "—"}</div>
-          <div class="metric-delta ${vsPrevFmt.cls}">${vsPrev ? vsPrevFmt.text : "first scan"}</div>
-        </div>
-        <div class="metric-cell">
-          <div class="metric-label">AVG LISTING</div>
-          <div class="metric-value">${p.avg != null ? "$" + p.avg : "—"}</div>
-          <div class="metric-delta ${vsOpenAvgFmt.cls}">${vsOpen ? vsOpenAvgFmt.text : "vs open"}</div>
-        </div>
-        <div class="metric-cell">
-          <div class="metric-label">LISTINGS</div>
-          <div class="metric-value">${p.listings != null ? p.listings : "—"}</div>
-          <div class="metric-delta flat">available</div>
-        </div>
-        <div class="metric-cell">
-          <div class="metric-label">FACE VALUE</div>
-          <div class="metric-value">${p.face != null ? "$" + p.face : "—"}</div>
-          <div class="metric-delta flat">box office</div>
-        </div>
-      </div>
-      <div class="delta-row">
-        <div class="delta-cell">
-          <span class="delta-cell-label">VS LAST SCAN</span>
-          <span class="delta-cell-value ${vsPrevFmt.cls}">${vsPrevFmt.text}</span>
-        </div>
-        <div class="delta-cell">
-          <span class="delta-cell-label">VS SESSION OPEN</span>
-          <span class="delta-cell-value ${vsOpenFmt.cls}">${vsOpenFmt.text}</span>
-        </div>
-      </div>
-      <div class="aggression-bar">
-        <span class="aggression-label">SIGNAL</span>
-        <span class="aggression-signal ${sig.cls}">${sig.signal}</span>
-        <span class="aggression-reason">${sig.reason}</span>
-      </div>
-    </div>`;
-  } else {
-    ticketHTML = `
-    <div class="ticket-block">
-      <div class="ticket-header"><span class="ticket-source">SECONDARY MKT</span><span class="ticket-updated">—</span></div>
-      <div class="metrics-grid">
-        <div class="metric-cell"><div class="metric-label">GET-IN</div><div class="metric-value pending">—</div><div class="metric-delta flat">pending scan</div></div>
-        <div class="metric-cell"><div class="metric-label">AVG LISTING</div><div class="metric-value pending">—</div><div class="metric-delta flat">pending scan</div></div>
-        <div class="metric-cell"><div class="metric-label">LISTINGS</div><div class="metric-value pending">—</div><div class="metric-delta flat">pending scan</div></div>
-        <div class="metric-cell"><div class="metric-label">FACE VALUE</div><div class="metric-value pending">—</div><div class="metric-delta flat">pending scan</div></div>
-      </div>
-      <div class="delta-row">
-        <div class="delta-cell"><span class="delta-cell-label">VS LAST SCAN</span><span class="delta-cell-value flat">—</span></div>
-        <div class="delta-cell"><span class="delta-cell-label">VS SESSION OPEN</span><span class="delta-cell-value flat">—</span></div>
-      </div>
-      <div class="aggression-bar"><span class="aggression-label">SIGNAL</span><span class="aggression-signal sig-pending">AWAITING DATA</span><span class="aggression-reason"></span></div>
-    </div>`;
+// ── Load initial data ──
+async function loadData() {
+  try {
+    const [games, signals] = await Promise.all([fetchGames(), fetchSignals()]);
+    state.games = {};
+    games.forEach(g => { const n = normalizeGame(g); state.games[n.gameId] = n; });
+    // Index latest signal per game
+    signals.forEach(s => {
+      const id = s.game_id || s.gameId;
+      if (!state.signals[id] || new Date(s.fired_at || s.firedAt) > new Date(state.signals[id].firedAt)) {
+        state.signals[id] = normalizeSignal(s);
+      }
+    });
+    document.getElementById("last-checked").textContent = "Loaded: " + new Date().toLocaleTimeString();
+    addLog("Loaded " + games.length + " games, " + signals.length + " signals", "success");
+    renderAll();
+  } catch (e) {
+    addLog("Failed to load data: " + e.message, "warn");
   }
-
-  const card = document.createElement("div");
-  card.id = `card-${gameId}`;
-  card.className = cardCls;
-  card.innerHTML = `
-    <div class="card-top">
-      <span class="game-time">${g.time}</span>
-      <div class="card-actions">
-        <button class="flag-btn ${flagged ? "flagged" : ""}" title="${flagged ? "Unflag" : "Flag High Risk"}" onclick="toggleFlag('${gameId}')">⚑</button>
-      </div>
-    </div>
-    <div class="matchup-line">
-      <span class="${t1c}">${g.team1}</span><span class="vs-sep">VS</span><span class="${t2c}">${g.team2}</span>
-    </div>
-    <div class="status-badges">${badges}</div>
-    ${ticketHTML}`;
-  return card;
 }
 
-function dayFromDate(dateStr) {
-  const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-  const parts = dateStr.split("/");
-  const d = new Date(2026, parseInt(parts[0]) - 1, parseInt(parts[1]));
-  return days[d.getDay()];
-}
-
-function renderPanel(k) {
-  const tourney = TOURNAMENTS[k], panel = document.getElementById(`panel-${k}`);
-  panel.innerHTML = "";
-  tourney.sessions.forEach(session => {
-    const block = document.createElement("div"); block.className = "session-block";
-    const hdr = document.createElement("div"); hdr.className = "session-label";
-    hdr.innerHTML = `<span>${tourney.abbr}</span> ${session.label} <span class="session-date">${dayFromDate(session.date)} ${session.date}</span>`;
-    block.appendChild(hdr);
-    const grid = document.createElement("div"); grid.className = "games-grid";
-    session.games.forEach(gs => grid.appendChild(buildGameCard(gs.id)));
-    block.appendChild(grid); panel.appendChild(block);
+// ── Rendering ──
+function getRounds() {
+  const rounds = {};
+  Object.values(state.games).forEach(g => {
+    const round = g.tournament || "Unknown";
+    if (!rounds[round]) rounds[round] = [];
+    rounds[round].push(g);
   });
-}
-
-function rerenderCard(id) {
-  const el = document.getElementById(`card-${id}`);
-  if (el) el.replaceWith(buildGameCard(id));
+  // Sort games within each round by game time
+  Object.values(rounds).forEach(arr => arr.sort((a, b) => new Date(a.gameTime) - new Date(b.gameTime)));
+  // Sort rounds by earliest game time
+  const sorted = Object.entries(rounds).sort((a, b) => {
+    const ta = Math.min(...a[1].map(g => new Date(g.gameTime).getTime()));
+    const tb = Math.min(...b[1].map(g => new Date(g.gameTime).getTime()));
+    return ta - tb;
+  });
+  return sorted;
 }
 
 function renderAll() {
-  Object.keys(TOURNAMENTS).forEach(k => renderPanel(k));
-  updateTabBadges(); updateSummaryBar();
+  const rounds = getRounds();
+  const tabsEl = document.getElementById("tabs-container");
+  const mainEl = document.getElementById("main-container");
+  tabsEl.innerHTML = "";
+  mainEl.innerHTML = "";
+
+  if (rounds.length === 0) {
+    mainEl.innerHTML = '<div class="empty-state"><div class="empty-state-msg">No games loaded. Click POPULATE BRACKET to fetch the NCAA tournament from ESPN.</div></div>';
+    return;
+  }
+
+  // Tab: ALL
+  const allTab = document.createElement("div");
+  allTab.className = "tab" + (!state.activeTab || state.activeTab === "__all" ? " active" : "");
+  allTab.textContent = "ALL";
+  const allBadge = document.createElement("span");
+  allBadge.className = "tab-badge";
+  allBadge.textContent = Object.keys(state.games).length;
+  allTab.appendChild(allBadge);
+  allTab.onclick = () => switchTab("__all");
+  tabsEl.appendChild(allTab);
+
+  // Tab per round
+  rounds.forEach(([round, games]) => {
+    const tab = document.createElement("div");
+    const shortRound = round.replace("NCAA Tournament - ", "");
+    tab.className = "tab" + (state.activeTab === round ? " active" : "");
+    tab.innerHTML = shortRound + ' <span class="tab-badge">' + games.length + "</span>";
+    tab.onclick = () => switchTab(round);
+    tabsEl.appendChild(tab);
+  });
+
+  // Panels
+  // ALL panel
+  const allPanel = document.createElement("div");
+  allPanel.className = "panel" + (!state.activeTab || state.activeTab === "__all" ? " active" : "");
+  allPanel.id = "panel-__all";
+  rounds.forEach(([round, games]) => {
+    allPanel.appendChild(buildRoundBlock(round, games));
+  });
+  mainEl.appendChild(allPanel);
+
+  // Per-round panels
+  rounds.forEach(([round, games]) => {
+    const panel = document.createElement("div");
+    panel.className = "panel" + (state.activeTab === round ? " active" : "");
+    panel.id = "panel-" + round;
+    panel.appendChild(buildRoundBlock(round, games));
+    mainEl.appendChild(panel);
+  });
+
+  updateSummary();
+}
+
+function buildRoundBlock(round, games) {
+  const block = document.createElement("div");
+  block.className = "round-block";
+  const hdr = document.createElement("div");
+  hdr.className = "round-label";
+  hdr.innerHTML = "<span>" + round + "</span> &mdash; " + games.length + " games";
+  block.appendChild(hdr);
+  const grid = document.createElement("div");
+  grid.className = "games-grid";
+  games.forEach(g => grid.appendChild(buildGameCard(g)));
+  block.appendChild(grid);
+  return block;
+}
+
+function fmtPrice(v) { return v != null ? "$" + Number(v).toFixed(0) : "&mdash;"; }
+function fmtPct(v) { return v != null ? (v * 100).toFixed(0) + "%" : "&mdash;"; }
+function fmtMinutes(m) {
+  if (m == null) return "&mdash;";
+  if (m < 0) return "LIVE / FINAL";
+  if (m < 60) return Math.round(m) + " min";
+  if (m < 1440) return (m / 60).toFixed(1) + " hrs";
+  return Math.round(m / 1440) + " days";
+}
+
+function buildGameCard(g) {
+  const sig = state.signals[g.gameId];
+  const sigConfig = sig ? (SIGNAL_CONFIG[sig.signal] || SIGNAL_CONFIG.HOLD) : null;
+  const hasTBD = g.game && g.game.includes("TBD");
+  const hasPrice = g.getIn != null;
+
+  let cardCls = "game-card";
+  if (sigConfig) cardCls += " " + sigConfig.card;
+
+  // Parse matchup
+  const parts = (g.game || "TBD vs TBD").split(/\s+vs\s+/i);
+  const team1 = parts[0] || "TBD";
+  const team2 = parts[1] || "TBD";
+
+  // Format game time
+  const gt = new Date(g.gameTime);
+  const timeStr = gt.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }) +
+    " " + gt.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+
+  // Signal badge
+  let signalBadge = '<span class="badge badge-pending">AWAITING DATA</span>';
+  if (sigConfig) signalBadge = '<span class="badge ' + sigConfig.badge + '">' + sigConfig.label + "</span>";
+
+  // TV badge
+  let tvBadge = g.isNationalTV ? ' <span class="badge badge-tv">NAT\'L TV</span>' : "";
+
+  // Ticket metrics
+  let ticketHTML;
+  if (hasPrice) {
+    ticketHTML = '<div class="ticket-block">' +
+      '<div class="ticket-header"><span class="ticket-source">SECONDARY MKT</span></div>' +
+      '<div class="metrics-grid">' +
+        '<div class="metric-cell"><div class="metric-label">GET-IN</div><div class="metric-value">' + fmtPrice(g.getIn) + '</div><div class="metric-sub">lowest</div></div>' +
+        '<div class="metric-cell"><div class="metric-label">AVG LISTING</div><div class="metric-value">' + fmtPrice(g.avgListing) + '</div><div class="metric-sub">average</div></div>' +
+        '<div class="metric-cell"><div class="metric-label">LISTINGS</div><div class="metric-value">' + (g.listingCount != null ? g.listingCount : "&mdash;") + '</div><div class="metric-sub">available</div></div>' +
+        '<div class="metric-cell"><div class="metric-label">WIN PROB</div><div class="metric-value">' + fmtPct(g.homeProbability) + '</div><div class="metric-sub">kalshi</div></div>' +
+      "</div>" +
+      '<div class="aggression-bar"><span class="aggression-label">SIGNAL</span>' +
+        '<span class="aggression-signal ' + (sigConfig ? sigConfig.cls : "sig-pending") + '">' + (sigConfig ? sigConfig.label : "AWAITING DATA") + "</span>" +
+        '<span class="aggression-reason">' + (sig && sig.narrative ? sig.narrative.substring(0, 60) : "") + "</span>" +
+      "</div>" +
+    "</div>";
+  } else {
+    ticketHTML = '<div class="ticket-block">' +
+      '<div class="ticket-header"><span class="ticket-source">SECONDARY MKT</span></div>' +
+      '<div class="metrics-grid">' +
+        '<div class="metric-cell"><div class="metric-label">GET-IN</div><div class="metric-value pending">&mdash;</div><div class="metric-sub">pending</div></div>' +
+        '<div class="metric-cell"><div class="metric-label">AVG LISTING</div><div class="metric-value pending">&mdash;</div><div class="metric-sub">pending</div></div>' +
+        '<div class="metric-cell"><div class="metric-label">LISTINGS</div><div class="metric-value pending">&mdash;</div><div class="metric-sub">pending</div></div>' +
+        '<div class="metric-cell"><div class="metric-label">WIN PROB</div><div class="metric-value pending">&mdash;</div><div class="metric-sub">pending</div></div>' +
+      "</div>" +
+      '<div class="aggression-bar"><span class="aggression-label">SIGNAL</span><span class="aggression-signal sig-pending">AWAITING DATA</span></div>' +
+    "</div>";
+  }
+
+  const card = document.createElement("div");
+  card.id = "card-" + g.gameId;
+  card.className = cardCls;
+  card.innerHTML =
+    '<div class="card-top">' +
+      '<span class="game-time">' + timeStr + "</span>" +
+      '<span class="game-round-tag">' + fmtMinutes(g.minutesToGame) + "</span>" +
+    "</div>" +
+    '<div class="matchup-line">' +
+      '<span class="team' + (team1.includes("TBD") ? " tbd-team" : "") + '">' + team1 + "</span>" +
+      '<span class="vs-sep">VS</span>' +
+      '<span class="team' + (team2.includes("TBD") ? " tbd-team" : "") + '">' + team2 + "</span>" +
+    "</div>" +
+    '<div class="status-badges">' + signalBadge + tvBadge + "</div>" +
+    ticketHTML;
+  return card;
+}
+
+function rerenderCard(id) {
+  const el = document.getElementById("card-" + id);
+  const g = state.games[id];
+  if (el && g) el.replaceWith(buildGameCard(g));
 }
 
 function switchTab(key) {
   state.activeTab = key;
   document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-  document.getElementById(`tab-${key}`).classList.add("active");
   document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
-  document.getElementById(`panel-${key}`).classList.add("active");
-}
-
-function toggleFlag(id) {
-  state.flags[id] = !state.flags[id];
-  addLog((state.flags[id] ? "Flagged HIGH RISK: " : "Unflagged: ") + getLabel(id), state.flags[id] ? "warn" : "");
-  rerenderCard(id); updateSummaryBar();
-}
-
-function getLabel(id) { const g = state.games[id]; return `${g.team1} vs ${g.team2}`; }
-
-// MONITORING CORE
-function toggleMonitor() { state.monitoring ? stopMonitor() : startMonitor(); }
-
-function startMonitor() {
-  state.monitoring = true;
-  document.getElementById("monitor-btn").textContent = "STOP MONITOR";
-  document.getElementById("monitor-btn").classList.add("active");
-  document.getElementById("status-dot").classList.add("live");
-  document.getElementById("status-label").textContent = "LIVE";
-  document.getElementById("scan-line").classList.add("active");
-  addLog(`Monitoring started — ${state.intervalMinutes} min interval, ${state.spikeThreshold}% spike threshold`, "success");
-  runScan(); scheduleNext();
-}
-
-function stopMonitor() {
-  state.monitoring = false;
-  clearInterval(state.pollTimer); clearInterval(state.countdownTimer);
-  document.getElementById("monitor-btn").textContent = "START MONITOR";
-  document.getElementById("monitor-btn").classList.remove("active");
-  document.getElementById("status-dot").classList.remove("live");
-  document.getElementById("status-label").textContent = "IDLE";
-  document.getElementById("scan-line").classList.remove("active");
-  document.getElementById("next-scan-label").textContent = "";
-  addLog("Monitoring stopped.");
-}
-
-function scheduleNext() {
-  state.nextScanIn = state.intervalMinutes * 60;
-  clearInterval(state.countdownTimer); clearInterval(state.pollTimer);
-  state.countdownTimer = setInterval(() => {
-    state.nextScanIn--;
-    const m = Math.floor(state.nextScanIn / 60), s = String(state.nextScanIn % 60).padStart(2, "0");
-    document.getElementById("next-scan-label").textContent = `NEXT SCAN ${m}:${s}`;
-    if (state.nextScanIn <= 0) clearInterval(state.countdownTimer);
-  }, 1000);
-  state.pollTimer = setInterval(() => { runScan(); scheduleNext(); }, state.intervalMinutes * 60 * 1000);
-}
-
-function updateInterval() {
-  state.intervalMinutes = parseInt(document.getElementById("interval-select").value);
-  if (state.monitoring) { clearInterval(state.pollTimer); clearInterval(state.countdownTimer); scheduleNext(); addLog("Interval updated to " + state.intervalMinutes + " min."); }
-}
-function updateThreshold() {
-  state.spikeThreshold = parseInt(document.getElementById("threshold-select").value);
-  addLog("Spike threshold set to " + state.spikeThreshold + "%."); renderAll();
-}
-
-async function runScan() {
-  const indicator = document.getElementById("checking-indicator");
-  const scanBtn = document.getElementById("scan-btn");
-  indicator.classList.add("visible"); scanBtn.disabled = true; scanBtn.textContent = "SCANNING...";
-  addLog("Scan started — matchups + secondary market pricing...");
-
-  const tourneys = [
-    { key: "bigten", label: "Big Ten Men's Basketball Tournament 2026" },
-    { key: "acc",    label: "ACC Men's Basketball Tournament 2026" },
-    { key: "big12",  label: "Big 12 Men's Basketball Tournament 2026" },
-    { key: "sec",    label: "SEC Men's Basketball Tournament 2026" }
-  ];
-
-  const delay = ms => new Promise(r => setTimeout(r, ms));
-  await checkAllMatchups(tourneys);
-  await delay(45000);
-  await checkAllPricing(tourneys);
-
-  document.getElementById("last-checked").textContent = "Last scan: " + new Date().toLocaleTimeString();
-  updateTabBadges(); updateSummaryBar(); renderAll();
-  addLog("Scan complete.", "success");
-  indicator.classList.remove("visible"); scanBtn.disabled = false; scanBtn.textContent = "MANUAL SCAN";
-}
-
-async function callClaude(systemPrompt, userPrompt, retries = 3) {
-  for (let attempt = 1; attempt <= retries; attempt++) {
-    const resp = await fetch("https://matchup-proxy.ttsega386.workers.dev/", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-api-key": API_KEY, "anthropic-version": "2023-06-01" },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 1200,
-        tools: [{ type: "web_search_20250305", name: "web_search" }],
-        system: systemPrompt,
-        messages: [{ role: "user", content: userPrompt }]
-      })
-    });
-    const data = await resp.json();
-    if (data?.error?.type === "rate_limit_error") {
-      const waitSec = attempt * 60;
-      addLog("Rate limit hit — waiting " + waitSec + "s before retry " + attempt + "/" + retries + "...", "warn");
-      await new Promise(r => setTimeout(r, waitSec * 1000));
-      continue;
-    }
-    if (!data || !data.content) {
-      const errMsg = data?.error?.message || data?.error?.type || JSON.stringify(data);
-      throw new Error("API error: " + errMsg);
-    }
-    return data.content.filter(b => b.type === "text").map(b => b.text).join("");
-  }
-  throw new Error("Rate limit: max retries exceeded. Try again in a few minutes.");
-}
-
-async function checkAllMatchups(tourneys) {
-  try {
-    const allLabels = tourneys.map(t => t.label).join(", ");
-    const text = await callClaude(
-      `Search for confirmed matchups for all of these March 13-15 2026 tournaments: ${allLabels}. Return ONLY a JSON array: [{"tournament":"B1G","team1":"Michigan","team2":"Ohio State","session":"Quarterfinals","time":"12:00 PM ET"}]. Use "TBD" if unconfirmed. Include tournament field to identify which tournament each game belongs to. Return [] if none.`,
-      `Current bracket matchups for all March 13-15 2026 tournaments. JSON array only.`
-    );
-    const m = text.match(/\[[\s\S]*?\]/);
-    if (m) {
-      let games = []; try { games = JSON.parse(m[0]); } catch(e) {}
-      // Route each game to its tournament
-      const keyMap = { "B1G": "bigten", "Big Ten": "bigten", "BigTen": "bigten", "ACC": "acc", "Big 12": "big12", "Big12": "big12", "B12": "big12", "SEC": "sec" };
-      const tournyKeywords = { "bigten": ["big ten", "b1g", "bigten"], "acc": ["acc"], "big12": ["big 12", "big12", "b12"], "sec": ["sec"] };
-      tourneys.forEach(t => {
-        const tGames = games.filter(g => {
-          if (!g.tournament) return false;
-          const gt = g.tournament.toLowerCase();
-          return (keyMap[g.tournament] === t.key) || (tournyKeywords[t.key] || []).some(kw => gt.includes(kw));
-        });
-        if (tGames.length) processMatchups(t.key, tGames);
-      });
-    }
-  } catch(e) { addLog("Matchup batch check failed: " + e.message, "warn"); }
-}
-
-async function checkAllPricing(tourneys) {
-  try {
-    const allSessions = tourneys.map(t => {
-      const sessions = TOURNAMENTS[t.key].sessions.map(s => {
-        const games = s.games.map(g => { const c = state.games[g.id]; return c.team1 + " vs " + c.team2; }).join(", ");
-        return s.label + " at " + TOURNAMENTS[t.key].venue + ": " + games;
-      }).join("; ");
-      return t.label + " — " + sessions;
-    }).join("\n");
-
-    const text = await callClaude(
-      `Search StubHub, SeatGeek and Vivid Seats for current ticket prices for college basketball tournaments. Return ONLY a JSON array: [{"tournament":"B1G","team1":"Michigan","team2":"Ohio State","getIn":95,"avg":155,"listings":180,"face":70,"source":"StubHub"}]. getIn=lowest price, avg=average, listings=count, face=face value. Use null if unavailable. Return [] if no data.`,
-      `Find current ticket prices for these March 13-15 2026 tournament sessions:
-${allSessions}
-Return JSON array only.`
-    );
-    const m = text.match(/\[[\s\S]*?\]/);
-    if (m) {
-      let prices = []; try { prices = JSON.parse(m[0]); } catch(e) { addLog("Pricing parse error: " + e.message, "warn"); }
-      if (prices.length) {
-        const keyMap = { "B1G": "bigten", "Big Ten": "bigten", "BigTen": "bigten", "ACC": "acc", "Big 12": "big12", "Big12": "big12", "B12": "big12", "SEC": "sec" };
-        const tournyKeywords = { "bigten": ["big ten", "b1g", "bigten"], "acc": ["acc"], "big12": ["big 12", "big12", "b12"], "sec": ["sec"] };
-        tourneys.forEach(t => {
-          const tPrices = prices.filter(p => {
-            if (!p.tournament) return false;
-            const pt = p.tournament.toLowerCase();
-            return (keyMap[p.tournament] === t.key) || (tournyKeywords[t.key] || []).some(kw => pt.includes(kw));
-          });
-          if (tPrices.length) processPricing(t.key, tPrices);
-        });
-      } else { addLog("Pricing: no listings found yet on secondary market", ""); }
-    }
-  } catch(e) { addLog("Pricing batch check failed: " + e.message, "warn"); }
-}
-
-async function checkMatchups(key, label) {
-  try {
-    const text = await callClaude(
-      `Search for confirmed matchups for the ${label} March 13-15 2026. Return ONLY a JSON array: [{"team1":"Michigan","team2":"Ohio State","session":"Quarterfinals","time":"12:00 PM ET"}]. Use "TBD" if unconfirmed. Return [] if none.`,
-      `Current bracket for ${label} March 13-15 2026. JSON array only.`
-    );
-    const m = text.match(/\[[\s\S]*?\]/);
-    if (m) { let g = []; try { g = JSON.parse(m[0]); } catch(e) {} if (g.length) processMatchups(key, g); }
-  } catch(e) { addLog(`${TOURNAMENTS[key].abbr} matchup check failed: ${e.message}`, "warn"); }
-}
-
-async function checkTicketPricing(key, label) {
-  try {
-    const tourney = TOURNAMENTS[key];
-    const sessionQueries = tourney.sessions.map(s => {
-      const confirmed = s.games.map(g => state.games[g.id]).filter(g => g.team1 !== "TBD" && g.team2 !== "TBD").map(g => g.team1 + " vs " + g.team2).join(", ");
-      return s.label + " (" + s.date + ") at " + tourney.venue + (confirmed ? " — games: " + confirmed : "");
-    }).join("\n");
-
-    const sysPrompt = "You are a ticket market analyst. Search StubHub, SeatGeek, and Vivid Seats for current ticket prices. Return ONLY a JSON array: [{\"team1\":\"A\",\"team2\":\"B\",\"getIn\":95,\"avg\":155,\"listings\":180,\"face\":70,\"source\":\"StubHub\"}]. getIn=lowest price, avg=average, listings=count, face=face value. Use null if unavailable. Return [] if no data.";
-    const userPrompt = "Find current ticket prices for " + label + " at " + tourney.venue + " March 13-15 2026. Sessions: " + sessionQueries + ". Return JSON array only.";
-
-    const text = await callClaude(sysPrompt, userPrompt);
-    addLog(tourney.abbr + " raw pricing response: " + text.substring(0, 300), "");
-    const m = text.match(/\[[\s\S]*?\]/);
-    if (!m) { addLog(tourney.abbr + " pricing: no JSON array found in response", "warn"); }
-    else { let prices = []; try { prices = JSON.parse(m[0]); } catch(e) { addLog(tourney.abbr + " pricing parse error: " + e.message, "warn"); } if (prices.length) processPricing(key, prices); else addLog(tourney.abbr + " pricing: empty array returned", "warn"); }
-  } catch(e) { addLog(TOURNAMENTS[key].abbr + " pricing check failed: " + e.message, "warn"); }
-}
-
-function processMatchups(key, incoming) {
-  const tourney = TOURNAMENTS[key];
-  incoming.forEach(inc => {
-    if (!inc.team1 || !inc.team2) return;
-    tourney.sessions.forEach(session => {
-      session.games.forEach(gs => {
-        const cur = state.games[gs.id];
-        const wasTBD1 = cur.team1 === "TBD", wasTBD2 = cur.team2 === "TBD";
-        if (!wasTBD1 && !wasTBD2) return;
-        const matchT1 = cur.team1.toLowerCase() === inc.team1.toLowerCase();
-        const matchT2 = cur.team2.toLowerCase() === inc.team2.toLowerCase();
-        const newT1 = inc.team1 !== "TBD", newT2 = inc.team2 !== "TBD";
-        const p1 = cur.team1, p2 = cur.team2;
-        if (matchT1 && wasTBD2 && newT2) { state.games[gs.id].team2 = inc.team2; state.newlyConfirmed.add(gs.id); fireMatchupAlert(key, gs.id, p1, p2, cur.team1, inc.team2); }
-        if (matchT2 && wasTBD1 && newT1) { state.games[gs.id].team1 = inc.team1; state.newlyConfirmed.add(gs.id); fireMatchupAlert(key, gs.id, p1, p2, inc.team1, cur.team2); }
-      });
-    });
+  // Find matching tab
+  const tabs = document.querySelectorAll(".tab");
+  tabs.forEach(t => {
+    const isAll = key === "__all" && t.textContent.startsWith("ALL");
+    const isMatch = t.textContent.includes(key.replace("NCAA Tournament - ", ""));
+    if (isAll || isMatch) t.classList.add("active");
   });
+  const panel = document.getElementById("panel-" + key);
+  if (panel) panel.classList.add("active");
 }
 
-function processPricing(key, priceData) {
-  const tourney = TOURNAMENTS[key];
-  priceData.forEach(pd => {
-    if (pd.getIn == null) return;
-    tourney.sessions.forEach(session => {
-      session.games.forEach(gs => {
-        const cur = state.games[gs.id];
-        const t1Match = cur.team1 !== "TBD" && ((pd.team1 || "").toLowerCase().includes(cur.team1.toLowerCase().split(" ")[0]) || cur.team1.toLowerCase().includes((pd.team1 || "").toLowerCase().split(" ")[0]));
-        if (!t1Match) return;
-        const prev = state.pricing[gs.id];
-        if (prev) state.prevPrices[gs.id] = { getIn: prev.getIn, avg: prev.avg };
-        if (!state.openPrices[gs.id]) {
-          state.openPrices[gs.id] = { getIn: pd.getIn, avg: pd.avg };
-          addLog(`${TOURNAMENTS[key].abbr} open price set: ${cur.team1} vs ${cur.team2} — get-in $${pd.getIn}`, "success");
-        }
-        state.pricing[gs.id] = { getIn: pd.getIn, avg: pd.avg, listings: pd.listings, face: pd.face, source: pd.source || "StubHub/SeatGeek", lastUpdated: new Date().toLocaleTimeString() };
+function updateSummary() {
+  const games = Object.values(state.games);
+  const sigs = state.signals;
+  document.getElementById("sum-total").textContent = games.length;
+  document.getElementById("sum-priced").textContent = games.filter(g => g.getIn != null).length;
+  document.getElementById("games-count").textContent = games.length + " games tracked";
 
-        if (prev && prev.getIn > 0) {
-          const chg = ((pd.getIn - prev.getIn) / prev.getIn) * 100;
-          if (chg >= state.spikeThreshold) { state.sessionSpikes++; firePriceAlert(key, gs.id, "spike", prev.getIn, pd.getIn, chg); }
-          else if (chg <= -state.spikeThreshold) { state.sessionDrops++; firePriceAlert(key, gs.id, "drop", prev.getIn, pd.getIn, chg); }
-          else if (Math.abs(chg) >= 2) addLog(`${TOURNAMENTS[key].abbr} ${cur.team1} vs ${cur.team2}: get-in ${chg > 0 ? "+" : ""}${chg.toFixed(1)}% ($${prev.getIn}→$${pd.getIn})`, chg > 0 ? "price-up" : "price-down");
-        }
-      });
-    });
+  let aggressive = 0, caution = 0;
+  Object.values(sigs).forEach(s => {
+    if (s.signal === "GET_AGGRESSIVE" || s.signal === "LEAN_IN") aggressive++;
+    if (s.signal === "WATCH" || s.signal === "BACK_OFF") caution++;
   });
+  document.getElementById("sum-aggressive").textContent = aggressive;
+  document.getElementById("sum-caution").textContent = caution;
 }
 
-function fireMatchupAlert(key, id, p1, p2, n1, n2) {
-  const msg = `${TOURNAMENTS[key].abbr}: ${n1} vs ${n2} confirmed (was: ${p1} vs ${p2})`;
-  addLog(msg, "success"); pushAlert(msg, "matchup", "NEW MATCHUP", key);
-}
-
-function firePriceAlert(key, id, type, prev, curr, pct) {
-  const g = state.games[id], dir = type === "spike" ? "▲" : "▼";
-  const msg = `${TOURNAMENTS[key].abbr} ${g.team1} vs ${g.team2}: ${dir} get-in ${pct > 0 ? "+" : ""}${pct.toFixed(1)}% ($${prev}→$${curr})`;
-  addLog(msg, type === "spike" ? "price-up" : "price-down");
-  pushAlert(msg, type === "spike" ? "price-spike" : "price-drop", type === "spike" ? "PRICE SPIKE" : "PRICE DROP", key);
-}
-
-function pushAlert(msg, cls, badge, key) {
-  const tray = document.getElementById("alert-tray"), el = document.createElement("div");
-  el.className = `alert-item ${cls}`;
-  el.innerHTML = `<span class="alert-badge">${badge}</span><span class="alert-text">${msg}</span><span class="alert-time">${new Date().toLocaleTimeString()}</span><button class="btn btn-ghost" style="font-size:10px;padding:3px 8px;" onclick="switchTab('${key}')">VIEW</button><span class="alert-close" onclick="this.parentElement.remove()">×</span>`;
+// ── Alerts ──
+function pushAlert(msg, cls, badge) {
+  const tray = document.getElementById("alert-tray");
+  const el = document.createElement("div");
+  el.className = "alert-item " + cls;
+  el.innerHTML = '<span class="alert-badge">' + badge + '</span><span class="alert-text">' + msg +
+    '</span><span class="alert-time">' + new Date().toLocaleTimeString() +
+    '</span><span class="alert-close" onclick="this.parentElement.remove()">&#215;</span>';
   tray.prepend(el);
   setTimeout(() => { if (el.parentNode) el.remove(); }, 30000);
 }
 
-function addLog(msg, type = "") {
-  const log = document.getElementById("activity-log"), entry = document.createElement("div");
+// ── Log ──
+function addLog(msg, type) {
+  const log = document.getElementById("activity-log");
+  const entry = document.createElement("div");
   entry.className = "log-entry";
-  entry.innerHTML = `<div class="log-time">${new Date().toLocaleTimeString()}</div><div class="log-msg ${type}">${msg}</div>`;
+  entry.innerHTML = '<div class="log-time">' + new Date().toLocaleTimeString() + '</div><div class="log-msg ' + (type || "") + '">' + msg + "</div>";
   log.prepend(entry);
   while (log.children.length > 100) log.removeChild(log.lastChild);
 }
@@ -890,8 +640,15 @@ function toggleLog() {
   document.getElementById("log-overlay").classList.toggle("open");
 }
 
-initGames(); renderAll();
-addLog("Dashboard loaded. 4 tournaments active — B1G, ACC, B12, SEC. Start monitor to begin.", "");
+// ── Init ──
+async function init() {
+  addLog("Connecting to backend: " + API_BASE);
+  await loadData();
+  connectWS();
+}
+
+// Auto-init if already authenticated (e.g. page reload)
+document.getElementById("pw-input").focus();
 </script>
 </body>
 </html>
