@@ -682,9 +682,9 @@ async function runScan() {
   const delay = ms => new Promise(r => setTimeout(r, ms));
   for (const t of tourneys) {
     await checkMatchups(t.key, t.label);
-    await delay(3000);
+    await delay(8000);
     await checkTicketPricing(t.key, t.label);
-    await delay(5000);
+    await delay(10000);
   }
 
   document.getElementById("last-checked").textContent = "Last scan: " + new Date().toLocaleTimeString();
@@ -716,8 +716,8 @@ async function callClaude(systemPrompt, userPrompt) {
 async function checkMatchups(key, label) {
   try {
     const text = await callClaude(
-      `You are a sports data assistant. Search for the LATEST confirmed matchups for the ${label} March 13-15 2026. Return ONLY a valid JSON array, no markdown:\n[{"team1":"Michigan","team2":"Ohio State","session":"Quarterfinals","time":"12:00 PM ET"}]\nUse "TBD" for unconfirmed. Return [] if nothing found.`,
-      `Get the latest confirmed bracket matchups for the ${label} March 13-15 2026. JSON array only.`
+      `Search for confirmed matchups for the ${label} March 13-15 2026. Return ONLY a JSON array: [{"team1":"Michigan","team2":"Ohio State","session":"Quarterfinals","time":"12:00 PM ET"}]. Use "TBD" if unconfirmed. Return [] if none.`,
+      `Current bracket for ${label} March 13-15 2026. JSON array only.`
     );
     const m = text.match(/\[[\s\S]*?\]/);
     if (m) { let g = []; try { g = JSON.parse(m[0]); } catch(e) {} if (g.length) processMatchups(key, g); }
@@ -732,34 +732,8 @@ async function checkTicketPricing(key, label) {
       return s.label + " (" + s.date + ") at " + tourney.venue + (confirmed ? " — games: " + confirmed : "");
     }).join("\n");
 
-    const sysPrompt = `You are a secondary ticket market analyst. Your job is to find the most accurate current ticket prices across ALL major secondary markets.
-
-For each session, you MUST search using ALL of the following naming conventions to maximize price data hits:
-1. Session-based: e.g. "Big Ten Tournament Session 5 tickets 2026"
-2. Round-based: e.g. "Big Ten Men's Basketball Tournament Quarterfinals tickets"
-3. Venue-based: e.g. "Gainbridge Fieldhouse basketball tickets March 13 2026"
-4. Date-based: e.g. "Big Ten Tournament March 13 2026 tickets"
-5. Team-based (for confirmed matchups): e.g. "Michigan vs Ohio State Big Ten Tournament tickets"
-6. Abbreviation-based: e.g. "B1G Tournament tickets 2026"
-7. Full championship name: e.g. "Big Ten Men's Basketball Championship 2026 tickets"
-8. Platform-specific searches on: StubHub, SeatGeek, Vivid Seats, Ticketmaster, TickPick, Gametime, AXS
-
-Search each platform individually if needed. Use the LOWEST get-in price found across all platforms as getIn. Use the most complete listing data available.
-
-Return ONLY a valid JSON array, no markdown, no explanation:
-[{"team1":"Michigan","team2":"Ohio State","session":"Quarterfinals","getIn":95,"avg":155,"listings":180,"face":70,"source":"StubHub"}]
-
-Rules:
-- getIn = single lowest available ticket price across all platforms searched
-- avg = average listing price
-- listings = total tickets available
-- face = Ticketmaster or venue box office face value
-- source = platform where getIn was found
-- Use null for any field with no data
-- Return one object per confirmed matchup
-- Return [] only if every single search attempt returns zero results`;
-
-    const userPrompt = "Search ALL major secondary ticket markets (StubHub, SeatGeek, Vivid Seats, Ticketmaster, TickPick, Gametime) using EVERY possible naming convention for the " + label + " at " + tourney.venue + " March 13-15 2026. Try session names, round names, team names, venue searches, and date searches. Sessions to price:\n" + sessionQueries + "\nAggregate the best data found. Return JSON array only.";
+    const sysPrompt = "You are a ticket market analyst. Search StubHub, SeatGeek, and Vivid Seats for current ticket prices. Return ONLY a JSON array: [{\"team1\":\"A\",\"team2\":\"B\",\"getIn\":95,\"avg\":155,\"listings\":180,\"face\":70,\"source\":\"StubHub\"}]. getIn=lowest price, avg=average, listings=count, face=face value. Use null if unavailable. Return [] if no data.";
+    const userPrompt = "Find current ticket prices for " + label + " at " + tourney.venue + " March 13-15 2026. Sessions: " + sessionQueries + ". Return JSON array only.";
 
     const text = await callClaude(sysPrompt, userPrompt);
     addLog(tourney.abbr + " raw pricing response: " + text.substring(0, 300), "");
