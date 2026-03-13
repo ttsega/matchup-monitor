@@ -680,12 +680,9 @@ async function runScan() {
   ];
 
   const delay = ms => new Promise(r => setTimeout(r, ms));
-  for (const t of tourneys) {
-    await checkMatchups(t.key, t.label);
-    await delay(8000);
-    await checkTicketPricing(t.key, t.label);
-    await delay(10000);
-  }
+  await checkAllMatchups(tourneys);
+  await delay(15000);
+  await checkAllPricing(tourneys);
 
   document.getElementById("last-checked").textContent = "Last scan: " + new Date().toLocaleTimeString();
   updateTabBadges(); updateSummaryBar(); renderAll();
@@ -711,6 +708,63 @@ async function callClaude(systemPrompt, userPrompt) {
     throw new Error("API error: " + errMsg);
   }
   return data.content.filter(b => b.type === "text").map(b => b.text).join("");
+}
+
+async function checkAllMatchups(tourneys) {
+  try {
+    const allLabels = tourneys.map(t => t.label).join(", ");
+    const text = await callClaude(
+      `Search for confirmed matchups for all of these March 13-15 2026 tournaments: ${allLabels}. Return ONLY a JSON array: [{"tournament":"B1G","team1":"Michigan","team2":"Ohio State","session":"Quarterfinals","time":"12:00 PM ET"}]. Use "TBD" if unconfirmed. Include tournament field to identify which tournament each game belongs to. Return [] if none.`,
+      `Current bracket matchups for all March 13-15 2026 tournaments. JSON array only.`
+    );
+    const m = text.match(/\[[\s\S]*?\]/);
+    if (m) {
+      let games = []; try { games = JSON.parse(m[0]); } catch(e) {}
+      // Route each game to its tournament
+      const keyMap = { "B1G": "b1g", "Big Ten": "b1g", "ACC": "acc", "Big 12": "big12", "B12": "big12", "SEC": "sec" };
+      tourneys.forEach(t => {
+        const tGames = games.filter(g => {
+          const k = keyMap[g.tournament] || Object.keys(keyMap).find(k => g.tournament && g.tournament.includes(k));
+          return k === t.key || (g.tournament && g.tournament.toLowerCase().includes(t.key));
+        });
+        if (tGames.length) processMatchups(t.key, tGames);
+      });
+    }
+  } catch(e) { addLog("Matchup batch check failed: " + e.message, "warn"); }
+}
+
+async function checkAllPricing(tourneys) {
+  try {
+    const allSessions = tourneys.map(t => {
+      const sessions = TOURNAMENTS[t.key].sessions.map(s => {
+        const games = s.games.map(g => { const c = state.games[g.id]; return c.team1 + " vs " + c.team2; }).join(", ");
+        return s.label + " at " + TOURNAMENTS[t.key].venue + ": " + games;
+      }).join("; ");
+      return t.label + " — " + sessions;
+    }).join("
+");
+
+    const text = await callClaude(
+      `Search StubHub, SeatGeek and Vivid Seats for current ticket prices for college basketball tournaments. Return ONLY a JSON array: [{"tournament":"B1G","team1":"Michigan","team2":"Ohio State","getIn":95,"avg":155,"listings":180,"face":70,"source":"StubHub"}]. getIn=lowest price, avg=average, listings=count, face=face value. Use null if unavailable. Return [] if no data.`,
+      `Find current ticket prices for these March 13-15 2026 tournament sessions:
+${allSessions}
+Return JSON array only.`
+    );
+    const m = text.match(/\[[\s\S]*?\]/);
+    if (m) {
+      let prices = []; try { prices = JSON.parse(m[0]); } catch(e) { addLog("Pricing parse error: " + e.message, "warn"); }
+      if (prices.length) {
+        const keyMap = { "B1G": "b1g", "Big Ten": "b1g", "ACC": "acc", "Big 12": "big12", "B12": "big12", "SEC": "sec" };
+        tourneys.forEach(t => {
+          const tPrices = prices.filter(p => {
+            const k = keyMap[p.tournament] || Object.keys(keyMap).find(k => p.tournament && p.tournament.includes(k));
+            return k === t.key || (p.tournament && p.tournament.toLowerCase().includes(t.key));
+          });
+          if (tPrices.length) processPricing(t.key, tPrices);
+        });
+      } else { addLog("Pricing: no listings found yet on secondary market", ""); }
+    }
+  } catch(e) { addLog("Pricing batch check failed: " + e.message, "warn"); }
 }
 
 async function checkMatchups(key, label) {
