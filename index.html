@@ -681,7 +681,7 @@ async function runScan() {
 
   const delay = ms => new Promise(r => setTimeout(r, ms));
   await checkAllMatchups(tourneys);
-  await delay(15000);
+  await delay(45000);
   await checkAllPricing(tourneys);
 
   document.getElementById("last-checked").textContent = "Last scan: " + new Date().toLocaleTimeString();
@@ -690,24 +690,33 @@ async function runScan() {
   indicator.classList.remove("visible"); scanBtn.disabled = false; scanBtn.textContent = "MANUAL SCAN";
 }
 
-async function callClaude(systemPrompt, userPrompt) {
-  const resp = await fetch("https://matchup-proxy.ttsega386.workers.dev/", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "x-api-key": API_KEY, "anthropic-version": "2023-06-01" },
-    body: JSON.stringify({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 1200,
-      tools: [{ type: "web_search_20250305", name: "web_search" }],
-      system: systemPrompt,
-      messages: [{ role: "user", content: userPrompt }]
-    })
-  });
-  const data = await resp.json();
-  if (!data || !data.content) {
-    const errMsg = data?.error?.message || data?.error?.type || JSON.stringify(data);
-    throw new Error("API error: " + errMsg);
+async function callClaude(systemPrompt, userPrompt, retries = 3) {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    const resp = await fetch("https://matchup-proxy.ttsega386.workers.dev/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-api-key": API_KEY, "anthropic-version": "2023-06-01" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1200,
+        tools: [{ type: "web_search_20250305", name: "web_search" }],
+        system: systemPrompt,
+        messages: [{ role: "user", content: userPrompt }]
+      })
+    });
+    const data = await resp.json();
+    if (data?.error?.type === "rate_limit_error") {
+      const waitSec = attempt * 60;
+      addLog("Rate limit hit — waiting " + waitSec + "s before retry " + attempt + "/" + retries + "...", "warn");
+      await new Promise(r => setTimeout(r, waitSec * 1000));
+      continue;
+    }
+    if (!data || !data.content) {
+      const errMsg = data?.error?.message || data?.error?.type || JSON.stringify(data);
+      throw new Error("API error: " + errMsg);
+    }
+    return data.content.filter(b => b.type === "text").map(b => b.text).join("");
   }
-  return data.content.filter(b => b.type === "text").map(b => b.text).join("");
+  throw new Error("Rate limit: max retries exceeded. Try again in a few minutes.");
 }
 
 async function checkAllMatchups(tourneys) {
@@ -721,11 +730,13 @@ async function checkAllMatchups(tourneys) {
     if (m) {
       let games = []; try { games = JSON.parse(m[0]); } catch(e) {}
       // Route each game to its tournament
-      const keyMap = { "B1G": "b1g", "Big Ten": "b1g", "ACC": "acc", "Big 12": "big12", "B12": "big12", "SEC": "sec" };
+      const keyMap = { "B1G": "bigten", "Big Ten": "bigten", "BigTen": "bigten", "ACC": "acc", "Big 12": "big12", "Big12": "big12", "B12": "big12", "SEC": "sec" };
+      const tournyKeywords = { "bigten": ["big ten", "b1g", "bigten"], "acc": ["acc"], "big12": ["big 12", "big12", "b12"], "sec": ["sec"] };
       tourneys.forEach(t => {
         const tGames = games.filter(g => {
-          const k = keyMap[g.tournament] || Object.keys(keyMap).find(k => g.tournament && g.tournament.includes(k));
-          return k === t.key || (g.tournament && g.tournament.toLowerCase().includes(t.key));
+          if (!g.tournament) return false;
+          const gt = g.tournament.toLowerCase();
+          return (keyMap[g.tournament] === t.key) || (tournyKeywords[t.key] || []).some(kw => gt.includes(kw));
         });
         if (tGames.length) processMatchups(t.key, tGames);
       });
@@ -753,11 +764,13 @@ Return JSON array only.`
     if (m) {
       let prices = []; try { prices = JSON.parse(m[0]); } catch(e) { addLog("Pricing parse error: " + e.message, "warn"); }
       if (prices.length) {
-        const keyMap = { "B1G": "b1g", "Big Ten": "b1g", "ACC": "acc", "Big 12": "big12", "B12": "big12", "SEC": "sec" };
+        const keyMap = { "B1G": "bigten", "Big Ten": "bigten", "BigTen": "bigten", "ACC": "acc", "Big 12": "big12", "Big12": "big12", "B12": "big12", "SEC": "sec" };
+        const tournyKeywords = { "bigten": ["big ten", "b1g", "bigten"], "acc": ["acc"], "big12": ["big 12", "big12", "b12"], "sec": ["sec"] };
         tourneys.forEach(t => {
           const tPrices = prices.filter(p => {
-            const k = keyMap[p.tournament] || Object.keys(keyMap).find(k => p.tournament && p.tournament.includes(k));
-            return k === t.key || (p.tournament && p.tournament.toLowerCase().includes(t.key));
+            if (!p.tournament) return false;
+            const pt = p.tournament.toLowerCase();
+            return (keyMap[p.tournament] === t.key) || (tournyKeywords[t.key] || []).some(kw => pt.includes(kw));
           });
           if (tPrices.length) processPricing(t.key, tPrices);
         });
