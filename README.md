@@ -17,7 +17,7 @@ Internal risk analyst tool for monitoring 2026 NCAA Men's Tournament matchups, s
 
 **URL:** https://ttsega.github.io/matchup-monitor/
 
-**Password:** Distributed internally — contact the ops team.
+**Password:** Distributed internally — contact the risk team.
 
 ## How To Use
 
