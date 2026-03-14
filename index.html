@@ -274,7 +274,7 @@ async function triggerScan() {
   indicator.classList.add("visible");
   addLog("Manual scan triggered...");
   try {
-    const resp = await fetch(API_BASE + "/health/scan", { method: "POST" });
+    const resp = await fetch(API_BASE + "/health/scan", { method: "POST", headers: { "x-admin-secret": ACCESS_PW } });
     const data = await resp.json();
     if (resp.ok) {
       addLog("Scan complete: " + data.gamesScanned + " games in " + data.elapsedMs + "ms", "success");
@@ -291,7 +291,7 @@ async function triggerPopulate() {
   btn.disabled = true; btn.textContent = "POPULATING...";
   addLog("Populating tournament bracket from ESPN...");
   try {
-    const resp = await fetch(API_BASE + "/admin/populate-tournament", { method: "POST" });
+    const resp = await fetch(API_BASE + "/admin/populate-tournament", { method: "POST", headers: { "x-admin-secret": ACCESS_PW } });
     const data = await resp.json();
     if (resp.ok) {
       addLog("Populate done: " + data.inserted + " inserted, " + data.updated + " updated", "success");
