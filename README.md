@@ -67,9 +67,9 @@ Internal risk analyst tool for monitoring 2026 NCAA Men's Tournament matchups, s
 ## Signal Weights
 
 ```
-Ticket velocity (SeatGeek):   45%
+Ticket velocity (SeatGeek):   55%
 Prediction market (Kalshi):   35%
-Game context (ESPN):          20%
+Game context (ESPN):          10%
 ```
 
 ## Round-Aware Confidence Thresholds
