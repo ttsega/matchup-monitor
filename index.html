@@ -41,12 +41,18 @@
   .btn-amber:hover { background: var(--amber-dim); }
 
   .summary-bar { display: flex; background: var(--bg2); border-bottom: 1px solid var(--border); overflow-x: auto; }
-  .summary-stat { padding: 8px 20px; border-right: 1px solid var(--border); display: flex; flex-direction: column; gap: 2px; min-width: 115px; }
+  .summary-stat { padding: 8px 20px; border-right: 1px solid var(--border); display: flex; flex-direction: column; gap: 2px; min-width: 115px; cursor: pointer; transition: background .15s; }
+  .summary-stat:hover { background: var(--bg3); }
+  .summary-stat.stat-active { background: var(--bg4); border-bottom: 2px solid var(--teal); }
   .s-label { font-family: var(--font-mono); font-size: 9px; color: var(--text-dim); letter-spacing: 2px; text-transform: uppercase; }
   .s-value { font-family: var(--font-mono); font-size: 16px; font-weight: 600; color: var(--text); }
   .s-value.up { color: var(--green); }
   .s-value.down { color: var(--red); }
   .s-sub { font-family: var(--font-mono); font-size: 9px; color: var(--text-dim); }
+
+  .filter-clear { font-family: var(--font-mono); font-size: 10px; color: var(--teal); letter-spacing: 1px; cursor: pointer; padding: 4px 10px; display: none; align-items: center; gap: 4px; }
+  .filter-clear:hover { color: var(--text); }
+  .filter-clear.visible { display: flex; }
 
   #alert-tray { padding: 0 20px; }
   .alert-item { display: flex; align-items: center; gap: 12px; border-radius: 3px; padding: 8px 14px; margin: 6px 0; font-family: var(--font-mono); font-size: 12px; animation: slideIn .3s ease; }
@@ -81,6 +87,7 @@
   .game-card.signal-lean { border-left: 3px solid var(--green-mid); }
   .game-card.signal-backoff { border-left: 3px solid var(--red); }
   .game-card.signal-watch { border-left: 3px solid var(--amber); }
+  .game-card.filtered-out { display: none; }
 
   .card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
   .game-time { font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); letter-spacing: 1px; }
@@ -110,6 +117,13 @@
   .metric-value { font-family: var(--font-mono); font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.2; }
   .metric-value.pending { color: var(--text-dim); font-size: 10px; }
   .metric-sub { font-family: var(--font-mono); font-size: 9px; color: var(--text-dim); margin-top: 2px; }
+
+  .signal-detail { border-top: 1px solid var(--border); margin-top: 8px; padding-top: 8px; }
+  .signal-detail-header { font-family: var(--font-mono); font-size: 9px; color: var(--text-dim); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+  .signal-detail-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
+  .signal-detail-cell { background: var(--bg4); border-radius: 3px; padding: 5px 7px; }
+  .signal-detail-label { font-family: var(--font-mono); font-size: 7px; color: var(--text-dim); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 2px; }
+  .signal-detail-value { font-family: var(--font-mono); font-size: 12px; font-weight: 600; color: var(--text); line-height: 1.2; }
 
   .aggression-bar { margin-top: 6px; background: var(--bg4); border-radius: 3px; padding: 7px 10px; display: flex; align-items: center; gap: 10px; }
   .aggression-label { font-family: var(--font-mono); font-size: 8px; color: var(--text-dim); letter-spacing: 1px; text-transform: uppercase; white-space: nowrap; }
@@ -152,6 +166,50 @@
   ::-webkit-scrollbar { width: 4px; height: 4px; }
   ::-webkit-scrollbar-track { background: var(--bg); }
   ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  /* HOW IT WORKS panel */
+  .hiw-panel { max-width: 900px; margin: 0 auto; }
+  .hiw-section { background: var(--bg3); border: 1px solid var(--border); border-radius: 4px; padding: 20px 24px; margin-bottom: 16px; }
+  .hiw-title { font-family: var(--font-mono); font-size: 12px; font-weight: 600; color: var(--teal); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 14px; }
+  .hiw-text { font-family: var(--font-sans); font-size: 13px; color: var(--text-muted); line-height: 1.7; margin-bottom: 12px; }
+
+  .weight-bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .weight-bar-label { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); width: 120px; flex-shrink: 0; }
+  .weight-bar-track { flex: 1; height: 22px; background: var(--bg4); border-radius: 3px; overflow: hidden; position: relative; }
+  .weight-bar-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; display: flex; align-items: center; padding-left: 8px; font-family: var(--font-mono); font-size: 10px; font-weight: 600; color: #000; }
+  .weight-bar-pct { font-family: var(--font-mono); font-size: 11px; color: var(--text-dim); width: 40px; text-align: right; flex-shrink: 0; }
+
+  .weight-toggle { display: flex; gap: 8px; margin-top: 12px; margin-bottom: 4px; }
+  .weight-toggle .btn { font-size: 10px; padding: 4px 10px; }
+
+  .tier-scale { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+  .tier-row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 3px; background: var(--bg4); transition: all .2s; }
+  .tier-row.tier-active { transform: scale(1.02); box-shadow: 0 0 12px rgba(0,0,0,.3); }
+  .tier-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .tier-label { font-family: var(--font-mono); font-size: 12px; font-weight: 600; flex: 1; }
+  .tier-range { font-family: var(--font-mono); font-size: 11px; color: var(--text-dim); }
+
+  .slider-container { margin-top: 12px; display: flex; align-items: center; gap: 12px; }
+  .slider-container input[type="range"] { flex: 1; accent-color: var(--teal); }
+  .slider-value { font-family: var(--font-mono); font-size: 14px; font-weight: 600; color: var(--teal); width: 36px; text-align: center; }
+
+  .round-conf-list { display: flex; flex-direction: column; gap: 6px; }
+  .round-conf-row { display: flex; align-items: center; gap: 12px; padding: 8px 12px; background: var(--bg4); border-radius: 3px; border-left: 3px solid var(--border2); }
+  .round-conf-row .rcr-name { font-family: var(--font-mono); font-size: 12px; font-weight: 600; color: var(--text); width: 130px; flex-shrink: 0; }
+  .round-conf-row .rcr-thresh { font-family: var(--font-mono); font-size: 13px; font-weight: 600; color: var(--teal); width: 40px; }
+  .round-conf-row .rcr-reason { font-family: var(--font-sans); font-size: 11px; color: var(--text-dim); }
+
+  .upset-table { width: 100%; border-collapse: collapse; }
+  .upset-table th { font-family: var(--font-mono); font-size: 9px; color: var(--text-dim); letter-spacing: 1px; text-transform: uppercase; text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--border); }
+  .upset-table td { font-family: var(--font-mono); font-size: 12px; color: var(--text-muted); padding: 6px 10px; border-bottom: 1px solid var(--border); }
+  .upset-table tr:last-child td { border-bottom: none; }
+  .upset-table .upset-pct { color: var(--amber); font-weight: 600; }
+  .upset-table .upset-bonus { color: var(--green); font-weight: 600; }
+
+  .kalshi-bonus-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .kalshi-bonus-card { background: var(--bg4); border-radius: 3px; padding: 12px 14px; text-align: center; }
+  .kalshi-bonus-round { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+  .kalshi-bonus-value { font-family: var(--font-mono); font-size: 20px; font-weight: 600; color: var(--green); }
 </style>
 </head>
 <body>
@@ -192,15 +250,16 @@
 <div class="controls-bar">
   <button class="btn btn-primary" onclick="triggerScan()" id="scan-btn">MANUAL SCAN</button>
   <button class="btn btn-amber" onclick="triggerPopulate()" id="populate-btn">POPULATE BRACKET</button>
+  <span class="filter-clear" id="filter-clear" onclick="clearSignalFilter()">&#215; CLEAR FILTER</span>
   <span style="flex:1"></span>
   <span class="last-checked" id="games-count">&mdash;</span>
 </div>
 
 <div class="summary-bar">
-  <div class="summary-stat"><span class="s-label">Total Games</span><span class="s-value" id="sum-total">&mdash;</span><span class="s-sub">NCAA Tournament</span></div>
-  <div class="summary-stat"><span class="s-label">With Pricing</span><span class="s-value up" id="sum-priced">0</span><span class="s-sub">have ticket data</span></div>
-  <div class="summary-stat"><span class="s-label">Aggressive</span><span class="s-value up" id="sum-aggressive">0</span><span class="s-sub">lean in + get aggressive</span></div>
-  <div class="summary-stat"><span class="s-label">Watch / Back Off</span><span class="s-value down" id="sum-caution">0</span><span class="s-sub">caution signals</span></div>
+  <div class="summary-stat" id="stat-total" onclick="filterBySignal('total')"><span class="s-label">Total Games</span><span class="s-value" id="sum-total">&mdash;</span><span class="s-sub">NCAA Tournament</span></div>
+  <div class="summary-stat" id="stat-priced" onclick="filterBySignal('priced')"><span class="s-label">With Pricing</span><span class="s-value up" id="sum-priced">0</span><span class="s-sub">have ticket data</span></div>
+  <div class="summary-stat" id="stat-aggressive" onclick="filterBySignal('aggressive')"><span class="s-label">Aggressive</span><span class="s-value up" id="sum-aggressive">0</span><span class="s-sub">lean in + get aggressive</span></div>
+  <div class="summary-stat" id="stat-caution" onclick="filterBySignal('caution')"><span class="s-label">Watch / Back Off</span><span class="s-value down" id="sum-caution">0</span><span class="s-sub">caution signals</span></div>
   <div class="summary-stat"><span class="s-label">WebSocket</span><span class="s-value" id="sum-ws">&#9679;</span><span class="s-sub" id="sum-ws-label">connecting</span></div>
 </div>
 
@@ -242,6 +301,7 @@ const state = {
   games: {},       // gameId -> latest row from /games
   signals: {},     // gameId -> latest signal
   activeTab: null,
+  activeFilter: null, // null | 'total' | 'priced' | 'aggressive' | 'caution'
   socket: null,
 };
 
@@ -329,7 +389,6 @@ function connectWS() {
   socket.on("snapshot:new", (snapshot) => {
     const id = snapshot.gameId || snapshot.game_id;
     if (!id) return;
-    // Merge into state (normalize snake_case from DB)
     state.games[id] = normalizeGame(snapshot);
     rerenderCard(id);
     updateSummary();
@@ -377,6 +436,7 @@ function normalizeSignal(row) {
     composite: row.composite,
     confidence: row.confidence,
     ticketScore: row.ticketScore ?? row.ticket_score ?? null,
+    oddsScore: row.oddsScore ?? row.odds_score ?? null,
     kalshiScore: row.kalshiScore ?? row.kalshi_score ?? null,
     contextScore: row.contextScore ?? row.context_score ?? null,
     narrative: row.narrative ?? null,
@@ -390,7 +450,6 @@ async function loadData() {
     const [games, signals] = await Promise.all([fetchGames(), fetchSignals()]);
     state.games = {};
     games.forEach(g => { const n = normalizeGame(g); state.games[n.gameId] = n; });
-    // Index latest signal per game
     signals.forEach(s => {
       const id = s.game_id || s.gameId;
       if (!state.signals[id] || new Date(s.fired_at || s.firedAt) > new Date(state.signals[id].firedAt)) {
@@ -405,18 +464,21 @@ async function loadData() {
   }
 }
 
-// ── Rendering ──
-function getRounds() {
-  const rounds = {};
+// ── Grouping: by date instead of tournament round ──
+function getDateKey(dateStr) {
+  const d = new Date(dateStr);
+  return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "America/New_York" });
+}
+
+function getDateGroups() {
+  const groups = {};
   Object.values(state.games).forEach(g => {
-    const round = g.tournament || "Unknown";
-    if (!rounds[round]) rounds[round] = [];
-    rounds[round].push(g);
+    const key = getDateKey(g.gameTime);
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(g);
   });
-  // Sort games within each round by game time
-  Object.values(rounds).forEach(arr => arr.sort((a, b) => new Date(a.gameTime) - new Date(b.gameTime)));
-  // Sort rounds by earliest game time
-  const sorted = Object.entries(rounds).sort((a, b) => {
+  Object.values(groups).forEach(arr => arr.sort((a, b) => new Date(a.gameTime) - new Date(b.gameTime)));
+  const sorted = Object.entries(groups).sort((a, b) => {
     const ta = Math.min(...a[1].map(g => new Date(g.gameTime).getTime()));
     const tb = Math.min(...b[1].map(g => new Date(g.gameTime).getTime()));
     return ta - tb;
@@ -424,67 +486,133 @@ function getRounds() {
   return sorted;
 }
 
+// ── Signal filter ──
+function filterBySignal(type) {
+  if (type === "total") {
+    clearSignalFilter();
+    return;
+  }
+  state.activeFilter = type;
+  document.querySelectorAll(".summary-stat").forEach(el => el.classList.remove("stat-active"));
+  const statEl = document.getElementById("stat-" + type);
+  if (statEl) statEl.classList.add("stat-active");
+  document.getElementById("filter-clear").classList.add("visible");
+  applyFilter();
+}
+
+function clearSignalFilter() {
+  state.activeFilter = null;
+  document.querySelectorAll(".summary-stat").forEach(el => el.classList.remove("stat-active"));
+  document.getElementById("filter-clear").classList.remove("visible");
+  applyFilter();
+}
+
+function applyFilter() {
+  document.querySelectorAll(".game-card").forEach(card => {
+    const gid = card.id.replace("card-", "");
+    const g = state.games[gid];
+    const sig = state.signals[gid];
+    let show = true;
+    if (state.activeFilter === "priced") {
+      show = g && g.getIn != null;
+    } else if (state.activeFilter === "aggressive") {
+      show = sig && (sig.signal === "GET_AGGRESSIVE" || sig.signal === "LEAN_IN");
+    } else if (state.activeFilter === "caution") {
+      show = sig && (sig.signal === "WATCH" || sig.signal === "BACK_OFF");
+    }
+    card.classList.toggle("filtered-out", !show);
+  });
+}
+
+// ── Rendering ──
 function renderAll() {
-  const rounds = getRounds();
+  const dateGroups = getDateGroups();
   const tabsEl = document.getElementById("tabs-container");
   const mainEl = document.getElementById("main-container");
   tabsEl.innerHTML = "";
   mainEl.innerHTML = "";
 
-  if (rounds.length === 0) {
+  if (dateGroups.length === 0) {
     mainEl.innerHTML = '<div class="empty-state"><div class="empty-state-msg">No games loaded. Click POPULATE BRACKET to fetch the NCAA tournament from ESPN.</div></div>';
     return;
   }
 
-  // Tab: ALL
-  const allTab = document.createElement("div");
-  allTab.className = "tab" + (!state.activeTab || state.activeTab === "__all" ? " active" : "");
-  allTab.textContent = "ALL";
-  const allBadge = document.createElement("span");
-  allBadge.className = "tab-badge";
-  allBadge.textContent = Object.keys(state.games).length;
-  allTab.appendChild(allBadge);
-  allTab.onclick = () => switchTab("__all");
-  tabsEl.appendChild(allTab);
+  // ALL tab (only if there are multiple date groups)
+  if (dateGroups.length > 1) {
+    const allTab = document.createElement("div");
+    allTab.className = "tab" + (!state.activeTab || state.activeTab === "__all" ? " active" : "");
+    allTab.textContent = "ALL";
+    const allBadge = document.createElement("span");
+    allBadge.className = "tab-badge";
+    allBadge.textContent = Object.keys(state.games).length;
+    allTab.appendChild(allBadge);
+    allTab.onclick = () => switchTab("__all");
+    tabsEl.appendChild(allTab);
+  }
 
-  // Tab per round
-  rounds.forEach(([round, games]) => {
+  // Tab per date
+  dateGroups.forEach(([dateLabel, games]) => {
     const tab = document.createElement("div");
-    const shortRound = round.replace("NCAA Tournament - ", "");
-    tab.className = "tab" + (state.activeTab === round ? " active" : "");
-    tab.innerHTML = shortRound + ' <span class="tab-badge">' + games.length + "</span>";
-    tab.onclick = () => switchTab(round);
+    const isOnlyGroup = dateGroups.length === 1;
+    const isActive = isOnlyGroup
+      ? (!state.activeTab || state.activeTab === dateLabel)
+      : (state.activeTab === dateLabel);
+    tab.className = "tab" + (isActive ? " active" : "");
+    tab.innerHTML = dateLabel + ' <span class="tab-badge">' + games.length + "</span>";
+    tab.dataset.tabKey = dateLabel;
+    tab.onclick = () => switchTab(dateLabel);
     tabsEl.appendChild(tab);
   });
 
-  // Panels
-  // ALL panel
-  const allPanel = document.createElement("div");
-  allPanel.className = "panel" + (!state.activeTab || state.activeTab === "__all" ? " active" : "");
-  allPanel.id = "panel-__all";
-  rounds.forEach(([round, games]) => {
-    allPanel.appendChild(buildRoundBlock(round, games));
-  });
-  mainEl.appendChild(allPanel);
+  // HOW IT WORKS tab
+  const hiwTab = document.createElement("div");
+  hiwTab.className = "tab" + (state.activeTab === "__hiw" ? " active" : "");
+  hiwTab.textContent = "HOW IT WORKS";
+  hiwTab.onclick = () => switchTab("__hiw");
+  tabsEl.appendChild(hiwTab);
 
-  // Per-round panels
-  rounds.forEach(([round, games]) => {
+  // Panels
+  // ALL panel (only if multiple groups)
+  if (dateGroups.length > 1) {
+    const allPanel = document.createElement("div");
+    allPanel.className = "panel" + (!state.activeTab || state.activeTab === "__all" ? " active" : "");
+    allPanel.id = "panel-__all";
+    dateGroups.forEach(([dateLabel, games]) => {
+      allPanel.appendChild(buildRoundBlock(dateLabel, games));
+    });
+    mainEl.appendChild(allPanel);
+  }
+
+  // Per-date panels
+  dateGroups.forEach(([dateLabel, games]) => {
+    const isOnlyGroup = dateGroups.length === 1;
+    const isActive = isOnlyGroup
+      ? (!state.activeTab || state.activeTab === dateLabel || state.activeTab === "__all")
+      : (state.activeTab === dateLabel);
     const panel = document.createElement("div");
-    panel.className = "panel" + (state.activeTab === round ? " active" : "");
-    panel.id = "panel-" + round;
-    panel.appendChild(buildRoundBlock(round, games));
+    panel.className = "panel" + (isActive ? " active" : "");
+    panel.id = "panel-" + dateLabel;
+    panel.appendChild(buildRoundBlock(dateLabel, games));
     mainEl.appendChild(panel);
   });
 
+  // HOW IT WORKS panel
+  const hiwPanel = document.createElement("div");
+  hiwPanel.className = "panel" + (state.activeTab === "__hiw" ? " active" : "");
+  hiwPanel.id = "panel-__hiw";
+  hiwPanel.innerHTML = buildHowItWorks();
+  mainEl.appendChild(hiwPanel);
+
   updateSummary();
+  if (state.activeFilter) applyFilter();
 }
 
-function buildRoundBlock(round, games) {
+function buildRoundBlock(label, games) {
   const block = document.createElement("div");
   block.className = "round-block";
   const hdr = document.createElement("div");
   hdr.className = "round-label";
-  hdr.innerHTML = "<span>" + round + "</span> &mdash; " + games.length + " games";
+  hdr.innerHTML = "<span>" + label + "</span> &mdash; " + games.length + " games";
   block.appendChild(hdr);
   const grid = document.createElement("div");
   grid.className = "games-grid";
@@ -495,6 +623,7 @@ function buildRoundBlock(round, games) {
 
 function fmtPrice(v) { return v != null ? "$" + Number(v).toFixed(0) : "&mdash;"; }
 function fmtPct(v) { return v != null ? (v * 100).toFixed(0) + "%" : "&mdash;"; }
+function fmtScore(v) { return v != null ? Number(v).toFixed(2) : "&mdash;"; }
 function fmtMinutes(m) {
   if (m == null) return "&mdash;";
   if (m < 0) return "LIVE / FINAL";
@@ -503,33 +632,48 @@ function fmtMinutes(m) {
   return Math.round(m / 1440) + " days";
 }
 
+function buildSignalDetail(sig) {
+  if (!sig) return "";
+  const sigConfig = SIGNAL_CONFIG[sig.signal] || SIGNAL_CONFIG.HOLD;
+  return '<div class="signal-detail">' +
+    '<div class="signal-detail-header">Signal Detail</div>' +
+    '<div class="signal-detail-grid">' +
+      '<div class="signal-detail-cell"><div class="signal-detail-label">Composite</div><div class="signal-detail-value">' + fmtScore(sig.composite) + '</div></div>' +
+      '<div class="signal-detail-cell"><div class="signal-detail-label">Odds API</div><div class="signal-detail-value">' + fmtScore(sig.oddsScore) + '</div></div>' +
+      '<div class="signal-detail-cell"><div class="signal-detail-label">Confidence</div><div class="signal-detail-value">' + (sig.confidence != null ? (sig.confidence * 100).toFixed(0) + "%" : "&mdash;") + '</div></div>' +
+      '<div class="signal-detail-cell"><div class="signal-detail-label">Tier</div><div class="signal-detail-value ' + sigConfig.cls + '">' + sigConfig.label + '</div></div>' +
+    '</div>' +
+  '</div>';
+}
+
 function buildGameCard(g) {
   const sig = state.signals[g.gameId];
   const sigConfig = sig ? (SIGNAL_CONFIG[sig.signal] || SIGNAL_CONFIG.HOLD) : null;
-  const hasTBD = g.game && g.game.includes("TBD");
   const hasPrice = g.getIn != null;
 
   let cardCls = "game-card";
   if (sigConfig) cardCls += " " + sigConfig.card;
+  if (state.activeFilter) {
+    let show = true;
+    if (state.activeFilter === "priced") show = hasPrice;
+    else if (state.activeFilter === "aggressive") show = sig && (sig.signal === "GET_AGGRESSIVE" || sig.signal === "LEAN_IN");
+    else if (state.activeFilter === "caution") show = sig && (sig.signal === "WATCH" || sig.signal === "BACK_OFF");
+    if (!show) cardCls += " filtered-out";
+  }
 
-  // Parse matchup
   const parts = (g.game || "TBD vs TBD").split(/\s+vs\s+/i);
   const team1 = parts[0] || "TBD";
   const team2 = parts[1] || "TBD";
 
-  // Format game time
   const gt = new Date(g.gameTime);
   const timeStr = gt.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }) +
     " " + gt.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
 
-  // Signal badge
   let signalBadge = '<span class="badge badge-pending">AWAITING DATA</span>';
   if (sigConfig) signalBadge = '<span class="badge ' + sigConfig.badge + '">' + sigConfig.label + "</span>";
 
-  // TV badge
   let tvBadge = g.isNationalTV ? ' <span class="badge badge-tv">NAT\'L TV</span>' : "";
 
-  // Ticket metrics
   let ticketHTML;
   if (hasPrice) {
     ticketHTML = '<div class="ticket-block">' +
@@ -558,6 +702,8 @@ function buildGameCard(g) {
     "</div>";
   }
 
+  const signalDetailHTML = buildSignalDetail(sig);
+
   const card = document.createElement("div");
   card.id = "card-" + g.gameId;
   card.className = cardCls;
@@ -572,7 +718,8 @@ function buildGameCard(g) {
       '<span class="team' + (team2.includes("TBD") ? " tbd-team" : "") + '">' + team2 + "</span>" +
     "</div>" +
     '<div class="status-badges">' + signalBadge + tvBadge + "</div>" +
-    ticketHTML;
+    ticketHTML +
+    signalDetailHTML;
   return card;
 }
 
@@ -586,15 +733,19 @@ function switchTab(key) {
   state.activeTab = key;
   document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
   document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
-  // Find matching tab
   const tabs = document.querySelectorAll(".tab");
   tabs.forEach(t => {
-    const isAll = key === "__all" && t.textContent.startsWith("ALL");
-    const isMatch = t.textContent.includes(key.replace("NCAA Tournament - ", ""));
-    if (isAll || isMatch) t.classList.add("active");
+    if (key === "__all" && t.textContent.startsWith("ALL")) t.classList.add("active");
+    else if (key === "__hiw" && t.textContent === "HOW IT WORKS") t.classList.add("active");
+    else if (t.dataset.tabKey === key) t.classList.add("active");
   });
   const panel = document.getElementById("panel-" + key);
   if (panel) panel.classList.add("active");
+
+  // Initialize HOW IT WORKS interactive elements after panel is visible
+  if (key === "__hiw") {
+    initHowItWorks();
+  }
 }
 
 function updateSummary() {
@@ -611,6 +762,178 @@ function updateSummary() {
   });
   document.getElementById("sum-aggressive").textContent = aggressive;
   document.getElementById("sum-caution").textContent = caution;
+}
+
+// ── HOW IT WORKS ──
+function buildHowItWorks() {
+  return '<div class="hiw-panel">' +
+
+    // Signal Architecture
+    '<div class="hiw-section">' +
+      '<div class="hiw-title">Signal Architecture</div>' +
+      '<div class="hiw-text">The composite signal is computed from four weighted data sources. Weights dynamically redistribute when SeatGeek ticket market data is available.</div>' +
+      '<div id="hiw-weights">' +
+        buildWeightBar("Odds API", 83, "var(--green)", "hiw-bar-odds") +
+        buildWeightBar("ESPN Context", 13, "var(--teal)", "hiw-bar-context") +
+        buildWeightBar("Upset Bonus", 4, "var(--amber)", "hiw-bar-upset") +
+        buildWeightBar("SeatGeek Tickets", 0, "var(--blue)", "hiw-bar-tickets") +
+      '</div>' +
+      '<div class="weight-toggle">' +
+        '<button class="btn btn-primary" id="hiw-toggle-inactive" onclick="setWeightMode(false)">SeatGeek Inactive</button>' +
+        '<button class="btn btn-ghost" id="hiw-toggle-active" onclick="setWeightMode(true)">SeatGeek Active</button>' +
+      '</div>' +
+    '</div>' +
+
+    // Signal Tiers
+    '<div class="hiw-section">' +
+      '<div class="hiw-title">Signal Tiers</div>' +
+      '<div class="hiw-text">The composite score maps to one of five signal tiers. Drag the slider to see which tier activates at each score.</div>' +
+      '<div class="tier-scale" id="hiw-tiers">' +
+        buildTierRow("GET AGGRESSIVE", "var(--green)", "sig-aggressive", ">= 0.82") +
+        buildTierRow("LEAN IN", "var(--green-mid)", "sig-lean", ">= 0.68") +
+        buildTierRow("HOLD", "var(--amber)", "sig-hold", ">= 0.45") +
+        buildTierRow("WATCH", "var(--blue)", "sig-watch", ">= 0.30") +
+        buildTierRow("BACK OFF", "var(--text-dim)", "sig-backoff", "< 0.30") +
+      '</div>' +
+      '<div class="slider-container">' +
+        '<span style="font-family:var(--font-mono);font-size:10px;color:var(--text-dim)">0.00</span>' +
+        '<input type="range" id="hiw-tier-slider" min="0" max="100" value="50" oninput="updateTierSlider(this.value)">' +
+        '<span style="font-family:var(--font-mono);font-size:10px;color:var(--text-dim)">1.00</span>' +
+        '<span class="slider-value" id="hiw-tier-value">0.50</span>' +
+      '</div>' +
+    '</div>' +
+
+    // Round Confidence Adjustments
+    '<div class="hiw-section">' +
+      '<div class="hiw-title">Round Confidence Adjustments</div>' +
+      '<div class="hiw-text">Confidence thresholds increase as the tournament progresses. Earlier rounds tolerate more noise; later rounds demand stronger signals before firing.</div>' +
+      '<div class="round-conf-list">' +
+        buildRoundConfRow("First Round", "0.55", "Large field, high variance") +
+        buildRoundConfRow("Second Round", "0.60", "Field narrows, trends emerging") +
+        buildRoundConfRow("Sweet 16", "0.65", "Elite teams, sharper signals") +
+        buildRoundConfRow("Elite Eight", "0.65", "High stakes, tight lines") +
+        buildRoundConfRow("Final Four", "0.70", "Peak market efficiency") +
+        buildRoundConfRow("Championship", "0.70", "Maximum signal quality required") +
+      '</div>' +
+    '</div>' +
+
+    // Upset Bonus
+    '<div class="hiw-section">' +
+      '<div class="hiw-title">Upset Bonus</div>' +
+      '<div class="hiw-text">When a heavy underdog wins, secondary market prices spike and sportsbook lines move sharply, creating signal opportunity. The upset bonus adds a small probability-weighted adjustment to the composite score based on seed matchup.</div>' +
+      '<table class="upset-table">' +
+        '<thead><tr><th>Matchup</th><th>Upset Prob</th><th>Bonus</th><th>Rationale</th></tr></thead>' +
+        '<tbody>' +
+          buildUpsetRow("1 vs 16", "1%", "+0.002", "Near-impossible, minimal signal") +
+          buildUpsetRow("2 vs 15", "6%", "+0.012", "Rare but notable") +
+          buildUpsetRow("3 vs 14", "15%", "+0.031", "Occasional bracket-busters") +
+          buildUpsetRow("4 vs 13", "21%", "+0.043", "Meaningful upset territory") +
+          buildUpsetRow("5 vs 12", "35%", "+0.071", "Classic upset seed") +
+          buildUpsetRow("6 vs 11", "38%", "+0.078", "Near coin-flip range") +
+          buildUpsetRow("7 vs 10", "40%", "+0.082", "High variance matchup") +
+          buildUpsetRow("8 vs 9", "49%", "+0.100", "Maximum parity") +
+        '</tbody>' +
+      '</table>' +
+    '</div>' +
+
+    // Kalshi Bonus
+    '<div class="hiw-section">' +
+      '<div class="hiw-title">Kalshi Bonus</div>' +
+      '<div class="hiw-text">Kalshi prediction market data is additive only (not a weighted component). It activates in the Sweet 16 and beyond, adding a bonus when convergence is detected between prediction markets and other signals.</div>' +
+      '<div class="kalshi-bonus-grid">' +
+        '<div class="kalshi-bonus-card"><div class="kalshi-bonus-round">Elite Eight</div><div class="kalshi-bonus-value">+0.05</div></div>' +
+        '<div class="kalshi-bonus-card"><div class="kalshi-bonus-round">Final Four / Championship</div><div class="kalshi-bonus-value">+0.08</div></div>' +
+      '</div>' +
+    '</div>' +
+
+  '</div>';
+}
+
+function buildWeightBar(label, pct, color, id) {
+  return '<div class="weight-bar-row">' +
+    '<span class="weight-bar-label">' + label + '</span>' +
+    '<div class="weight-bar-track"><div class="weight-bar-fill" id="' + id + '" style="width:' + pct + '%;background:' + color + '">' + (pct > 5 ? pct + '%' : '') + '</div></div>' +
+    '<span class="weight-bar-pct" id="' + id + '-pct">' + pct + '%</span>' +
+  '</div>';
+}
+
+function buildTierRow(label, dotColor, cls, range) {
+  return '<div class="tier-row" data-tier="' + label + '">' +
+    '<span class="tier-dot" style="background:' + dotColor + '"></span>' +
+    '<span class="tier-label ' + cls + '">' + label + '</span>' +
+    '<span class="tier-range">' + range + '</span>' +
+  '</div>';
+}
+
+function buildRoundConfRow(name, thresh, reason) {
+  return '<div class="round-conf-row">' +
+    '<span class="rcr-name">' + name + '</span>' +
+    '<span class="rcr-thresh">' + thresh + '</span>' +
+    '<span class="rcr-reason">' + reason + '</span>' +
+  '</div>';
+}
+
+function buildUpsetRow(matchup, pct, bonus, rationale) {
+  return '<tr><td>' + matchup + '</td><td class="upset-pct">' + pct + '</td><td class="upset-bonus">' + bonus + '</td><td>' + rationale + '</td></tr>';
+}
+
+function setWeightMode(seatgeekActive) {
+  const inactiveBtn = document.getElementById("hiw-toggle-inactive");
+  const activeBtn = document.getElementById("hiw-toggle-active");
+  if (seatgeekActive) {
+    activeBtn.className = "btn btn-primary";
+    inactiveBtn.className = "btn btn-ghost";
+    animateWeight("hiw-bar-odds", 42);
+    animateWeight("hiw-bar-context", 6);
+    animateWeight("hiw-bar-upset", 2);
+    animateWeight("hiw-bar-tickets", 50);
+  } else {
+    inactiveBtn.className = "btn btn-primary";
+    activeBtn.className = "btn btn-ghost";
+    animateWeight("hiw-bar-odds", 83);
+    animateWeight("hiw-bar-context", 13);
+    animateWeight("hiw-bar-upset", 4);
+    animateWeight("hiw-bar-tickets", 0);
+  }
+}
+
+function animateWeight(id, pct) {
+  const bar = document.getElementById(id);
+  const pctEl = document.getElementById(id + "-pct");
+  if (bar) {
+    bar.style.width = pct + "%";
+    bar.textContent = pct > 5 ? pct + "%" : "";
+  }
+  if (pctEl) pctEl.textContent = pct + "%";
+}
+
+function updateTierSlider(val) {
+  const score = val / 100;
+  document.getElementById("hiw-tier-value").textContent = score.toFixed(2);
+  let activeTier;
+  if (score >= 0.82) activeTier = "GET AGGRESSIVE";
+  else if (score >= 0.68) activeTier = "LEAN IN";
+  else if (score >= 0.45) activeTier = "HOLD";
+  else if (score >= 0.30) activeTier = "WATCH";
+  else activeTier = "BACK OFF";
+
+  document.querySelectorAll("#hiw-tiers .tier-row").forEach(row => {
+    if (row.dataset.tier === activeTier) {
+      row.classList.add("tier-active");
+      row.style.background = "var(--bg3)";
+      row.style.borderLeft = "3px solid var(--teal)";
+    } else {
+      row.classList.remove("tier-active");
+      row.style.background = "var(--bg4)";
+      row.style.borderLeft = "3px solid transparent";
+    }
+  });
+}
+
+function initHowItWorks() {
+  // Initialize the tier slider to current value
+  const slider = document.getElementById("hiw-tier-slider");
+  if (slider) updateTierSlider(slider.value);
 }
 
 // ── Alerts ──
