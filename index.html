@@ -238,6 +238,27 @@
   .sig-sort-btn.sort-active { border-color: var(--teal); color: var(--teal); }
   .sig-section { margin-bottom: 20px; }
   .sig-empty { text-align: center; padding: 30px 20px; font-family: var(--font-mono); font-size: 11px; color: var(--text-dim); letter-spacing: 1px; }
+
+  .sig-row-group { margin-bottom: 3px; }
+  .sig-expanded { background: var(--bg2); border: 1px solid var(--teal); border-top: none; border-radius: 0 0 3px 3px; padding: 14px 16px; animation: barFadeIn .2s ease; }
+  .sig-row-group .sig-row { border-radius: 3px 3px 0 0; }
+  .sig-row-group:not(.sig-open) .sig-row { border-radius: 3px; }
+  .sig-row-group.sig-open .sig-row { border-color: var(--teal); border-bottom-color: var(--border); background: var(--bg4); }
+  .sig-exp-matchup { font-family: var(--font-mono); font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .sig-exp-meta { font-family: var(--font-mono); font-size: 10px; color: var(--text-dim); margin-bottom: 10px; }
+  .sig-exp-badge-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .sig-exp-badge-row .badge { font-size: 11px; padding: 3px 10px; }
+  .sig-exp-sparkline { margin-bottom: 10px; }
+  .sig-exp-scores { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+  .sig-exp-score-row { display: flex; align-items: center; gap: 8px; }
+  .sig-exp-score-label { font-family: var(--font-mono); font-size: 9px; color: var(--text-dim); letter-spacing: 1px; text-transform: uppercase; width: 70px; flex-shrink: 0; }
+  .sig-exp-score-track { flex: 1; height: 6px; background: var(--bg4); border-radius: 3px; overflow: hidden; }
+  .sig-exp-score-fill { height: 100%; border-radius: 3px; }
+  .sig-exp-score-val { font-family: var(--font-mono); font-size: 10px; font-weight: 600; color: var(--text); width: 32px; text-align: right; flex-shrink: 0; }
+  .sig-exp-conf { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); margin-bottom: 8px; }
+  .sig-exp-conf strong { color: var(--teal); }
+  .sig-exp-narrative { font-family: var(--font-sans); font-size: 12px; color: var(--text-dim); font-style: italic; line-height: 1.5; margin-bottom: 10px; padding: 6px 10px; background: var(--bg4); border-radius: 3px; }
+  .sig-exp-actions { display: flex; gap: 8px; }
   .sig-row { display: flex; align-items: center; gap: 8px; padding: 7px 10px; background: var(--bg3); border: 1px solid var(--border); border-radius: 3px; margin-bottom: 3px; cursor: pointer; transition: background .12s, border-color .12s; }
   .sig-row:hover { background: var(--bg4); border-color: var(--border2); }
   .sig-row-seed { font-family: var(--font-mono); font-size: 9px; color: var(--text-dim); width: 52px; flex-shrink: 0; letter-spacing: 0.5px; }
@@ -718,29 +739,44 @@ const COMPOSITE_COLORS = {
 };
 
 function buildSparkline(gameId, color) {
-  const history = (window._signalHistory && window._signalHistory[gameId]) || [];
-  const w = 200, h = 28, pad = 2;
+  var history = (window._signalHistory && window._signalHistory[gameId]) || [];
+  var w = 200, h = 28, pad = 3;
   if (history.length === 0) {
     return '<div class="sparkline-wrap"><svg width="100%" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="none"></svg><span class="sparkline-label">TREND</span></div>';
   }
   if (history.length === 1) {
-    const y = h - pad - (history[0].composite * (h - pad * 2));
+    var midY = Math.round(h / 2);
     return '<div class="sparkline-wrap"><svg width="100%" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="none">' +
-      '<line x1="' + pad + '" y1="' + y + '" x2="' + (w - pad) + '" y2="' + y + '" stroke="' + color + '" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.6"/>' +
-      '<circle cx="' + (w - pad) + '" cy="' + y + '" r="2.5" fill="' + color + '"/>' +
+      '<line x1="' + pad + '" y1="' + midY + '" x2="' + (w - pad) + '" y2="' + midY + '" stroke="' + color + '" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.6"/>' +
+      '<circle cx="' + (w - pad) + '" cy="' + midY + '" r="2.5" fill="' + color + '"/>' +
     '</svg><span class="sparkline-label">TREND</span></div>';
   }
-  const n = history.length;
-  const xStep = (w - pad * 2) / (n - 1);
-  const points = history.map((pt, i) => {
-    const x = pad + i * xStep;
-    const y = h - pad - (pt.composite * (h - pad * 2));
-    return x.toFixed(1) + "," + y.toFixed(1);
-  });
-  const lastX = pad + (n - 1) * xStep;
-  const lastY = h - pad - (history[n - 1].composite * (h - pad * 2));
+  // Dynamic Y scale: min/max of actual data with 10% padding
+  var vals = history.map(function(pt) { return pt.composite != null ? pt.composite : 0; });
+  var dataMin = Math.min.apply(null, vals);
+  var dataMax = Math.max.apply(null, vals);
+  var range = dataMax - dataMin;
+  if (range < 0.01) range = 0.1; // prevent flat line when all values near-identical
+  var yPad = range * 0.1;
+  var yMin = dataMin - yPad;
+  var yMax = dataMax + yPad;
+  var yRange = yMax - yMin;
+  var drawH = h - pad * 2;
+
+  var n = history.length;
+  var xStep = (w - pad * 2) / (n - 1);
+  var pointStrs = [];
+  for (var i = 0; i < n; i++) {
+    var x = pad + i * xStep;
+    var normalized = (vals[i] - yMin) / yRange;
+    var y = h - pad - (normalized * drawH);
+    pointStrs.push(x.toFixed(1) + "," + y.toFixed(1));
+  }
+  var lastX = pad + (n - 1) * xStep;
+  var lastNorm = (vals[n - 1] - yMin) / yRange;
+  var lastY = h - pad - (lastNorm * drawH);
   return '<div class="sparkline-wrap"><svg width="100%" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="none">' +
-    '<polyline points="' + points.join(" ") + '" fill="none" stroke="' + color + '" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>' +
+    '<polyline points="' + pointStrs.join(" ") + '" fill="none" stroke="' + color + '" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>' +
     '<circle cx="' + lastX.toFixed(1) + '" cy="' + lastY.toFixed(1) + '" r="2.5" fill="' + color + '"/>' +
   '</svg><span class="sparkline-label">TREND</span></div>';
 }
@@ -925,13 +961,82 @@ function buildSignalRow(g, sig) {
   const badge = sigConfig
     ? '<span class="badge ' + sigConfig.badge + '">' + sigConfig.label + '</span>'
     : '<span class="badge badge-pending">PENDING</span>';
-  return '<div class="sig-row" onclick="navigateToCard(\'' + g.gameId + '\')">' +
-    '<span class="sig-row-seed">' + extractSeeds(g.game) + '</span>' +
-    '<span class="sig-row-matchup">' + shortMatchup(g.game) + '</span>' +
-    '<span class="sig-row-time">' + shortTime(g.gameTime) + '</span>' +
-    '<span class="sig-row-bar-wrap"><span class="sig-row-bar-track"><span class="sig-row-bar-fill" style="width:' + pct + '%;background:' + barColor + '"></span></span><span class="sig-row-score" style="color:' + barColor + '">' + comp.toFixed(2) + '</span></span>' +
-    '<span class="sig-row-badge">' + badge + '</span>' +
+  return '<div class="sig-row-group" id="sig-group-' + g.gameId + '">' +
+    '<div class="sig-row" onclick="toggleSigExpand(\'' + g.gameId + '\')">' +
+      '<span class="sig-row-seed">' + extractSeeds(g.game) + '</span>' +
+      '<span class="sig-row-matchup">' + shortMatchup(g.game) + '</span>' +
+      '<span class="sig-row-time">' + shortTime(g.gameTime) + '</span>' +
+      '<span class="sig-row-bar-wrap"><span class="sig-row-bar-track"><span class="sig-row-bar-fill" style="width:' + pct + '%;background:' + barColor + '"></span></span><span class="sig-row-score" style="color:' + barColor + '">' + comp.toFixed(2) + '</span></span>' +
+      '<span class="sig-row-badge">' + badge + '</span>' +
+    '</div>' +
   '</div>';
+}
+
+function buildSigExpandedPanel(gameId) {
+  const g = state.games[gameId];
+  const sig = state.signals[gameId];
+  if (!g) return "";
+  const sigConfig = sig ? (SIGNAL_CONFIG[sig.signal] || SIGNAL_CONFIG.HOLD) : null;
+  const barColor = sig ? (COMPOSITE_COLORS[sig.signal] || "#444") : "#444";
+  const comp = sig ? (sig.composite || 0) : 0;
+
+  const gt = new Date(g.gameTime);
+  const timeStr = gt.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "America/New_York" }) +
+    " " + gt.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: "America/New_York" });
+
+  const badge = sigConfig
+    ? '<span class="badge ' + sigConfig.badge + '">' + sigConfig.label + '</span>'
+    : '<span class="badge badge-pending">AWAITING DATA</span>';
+
+  // Score breakdown bars
+  const oddsVal = sig && sig.oddsScore != null ? sig.oddsScore : 0;
+  const ctxVal = sig && sig.contextScore != null ? sig.contextScore : 0;
+  const maxScore = Math.max(Math.abs(oddsVal), Math.abs(ctxVal), 0.01);
+  const oddsPct = Math.min((Math.abs(oddsVal) / 1.0) * 100, 100);
+  const ctxPct = Math.min((Math.abs(ctxVal) / 1.0) * 100, 100);
+
+  const confStr = sig && sig.confidence != null ? (sig.confidence * 100).toFixed(0) + "%" : "&mdash;";
+  const narrative = sig && sig.narrative ? sig.narrative : "No narrative available";
+
+  return '<div class="sig-expanded">' +
+    '<div class="sig-exp-matchup">' + (g.game || "TBD vs TBD") + '</div>' +
+    '<div class="sig-exp-meta">' + timeStr + '</div>' +
+    '<div class="sig-exp-badge-row">' + badge + '<span style="font-family:var(--font-mono);font-size:13px;font-weight:600;color:' + barColor + '">' + comp.toFixed(2) + '</span></div>' +
+    '<div class="sig-exp-sparkline">' + buildSparkline(gameId, barColor) + '</div>' +
+    '<div class="sig-exp-scores">' +
+      '<div class="sig-exp-score-row"><span class="sig-exp-score-label">Odds</span><div class="sig-exp-score-track"><div class="sig-exp-score-fill" style="width:' + oddsPct.toFixed(0) + '%;background:var(--teal)"></div></div><span class="sig-exp-score-val">' + fmtScore(sig ? sig.oddsScore : null) + '</span></div>' +
+      '<div class="sig-exp-score-row"><span class="sig-exp-score-label">Context</span><div class="sig-exp-score-track"><div class="sig-exp-score-fill" style="width:' + ctxPct.toFixed(0) + '%;background:#8888ff"></div></div><span class="sig-exp-score-val">' + fmtScore(sig ? sig.contextScore : null) + '</span></div>' +
+    '</div>' +
+    '<div class="sig-exp-conf">Confidence: <strong>' + confStr + '</strong></div>' +
+    '<div class="sig-exp-narrative">' + narrative + '</div>' +
+    '<div class="sig-exp-actions"><button class="btn btn-primary" onclick="event.stopPropagation();navigateToCard(\'' + gameId + '\')">VIEW IN DASHBOARD</button></div>' +
+  '</div>';
+}
+
+let _sigExpandedId = null;
+
+function toggleSigExpand(gameId) {
+  const prevGroup = _sigExpandedId ? document.getElementById("sig-group-" + _sigExpandedId) : null;
+
+  // Collapse previous
+  if (prevGroup) {
+    prevGroup.classList.remove("sig-open");
+    const prevPanel = prevGroup.querySelector(".sig-expanded");
+    if (prevPanel) prevPanel.remove();
+  }
+
+  // If clicking the same row, just collapse
+  if (_sigExpandedId === gameId) {
+    _sigExpandedId = null;
+    return;
+  }
+
+  // Expand new
+  _sigExpandedId = gameId;
+  const group = document.getElementById("sig-group-" + gameId);
+  if (!group) return;
+  group.classList.add("sig-open");
+  group.insertAdjacentHTML("beforeend", buildSigExpandedPanel(gameId));
 }
 
 // Signals panel state
