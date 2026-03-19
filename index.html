@@ -213,27 +213,31 @@
   .kalshi-bonus-round { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
   .kalshi-bonus-value { font-family: var(--font-mono); font-size: 20px; font-weight: 600; color: var(--green); }
 
-  /* Composite + breakdown bars on game cards */
+  /* Composite bar + sparkline on game cards */
   .card-bars { margin-bottom: 8px; animation: barFadeIn .4s ease; }
   @keyframes barFadeIn { from { opacity: 0; } to { opacity: 1; } }
-  .comp-bar-wrap { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
+  .comp-bar-wrap { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
   .comp-bar-track { flex: 1; height: 6px; background: var(--bg4); border-radius: 3px; overflow: hidden; }
   .comp-bar-fill { height: 100%; border-radius: 3px; transition: width .3s ease; }
   .comp-bar-val { font-family: var(--font-mono); font-size: 9px; font-weight: 600; width: 28px; text-align: right; flex-shrink: 0; }
-  .breakdown-bar-track { height: 4px; background: var(--bg4); border-radius: 2px; overflow: hidden; display: flex; }
-  .breakdown-bar-track > span { display: block; height: 100%; }
-  .bar-legend { display: flex; gap: 10px; margin-top: 3px; }
-  .bar-legend-item { display: flex; align-items: center; gap: 3px; font-family: var(--font-mono); font-size: 8px; color: var(--text-dim); letter-spacing: 0.5px; text-transform: uppercase; }
-  .bar-legend-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+  .sparkline-wrap { display: flex; align-items: center; gap: 4px; }
+  .sparkline-wrap svg { flex: 1; display: block; }
+  .sparkline-label { font-family: var(--font-mono); font-size: 8px; color: var(--text-dim); letter-spacing: 1px; text-transform: uppercase; flex-shrink: 0; }
 
   /* SIGNALS leaderboard tab */
   .signals-panel { max-width: 900px; margin: 0 auto; }
+  .sig-panel-header { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+  .sig-pill { font-family: var(--font-mono); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; padding: 5px 12px; border-radius: 14px; border: 1px solid var(--border2); color: var(--text-muted); cursor: pointer; transition: all .15s; background: transparent; white-space: nowrap; }
+  .sig-pill:hover { border-color: var(--text-muted); color: var(--text); }
+  .sig-pill.pill-active { background: var(--teal); color: #000; border-color: var(--teal); }
+  .sig-pill .pill-badge { display: inline-block; margin-left: 4px; padding: 0 4px; border-radius: 6px; font-size: 9px; font-weight: 600; background: rgba(255,255,255,.15); }
+  .sig-pill.pill-active .pill-badge { background: rgba(0,0,0,.2); }
+  .sig-sort-controls { margin-left: auto; display: flex; gap: 4px; }
+  .sig-sort-btn { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.5px; padding: 3px 8px; border-radius: 3px; border: 1px solid var(--border2); color: var(--text-dim); cursor: pointer; transition: all .12s; background: transparent; }
+  .sig-sort-btn:hover { border-color: var(--text-muted); color: var(--text); }
+  .sig-sort-btn.sort-active { border-color: var(--teal); color: var(--teal); }
   .sig-section { margin-bottom: 20px; }
-  .sig-section-header { font-family: var(--font-mono); font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; padding: 8px 0; border-bottom: 1px solid var(--border); margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
-  .sig-section-header .ssh-count { font-weight: 400; color: var(--text-dim); }
-  .sig-section-header.sec-act { color: var(--green); }
-  .sig-section-header.sec-monitor { color: var(--text-muted); }
-  .sig-section-header.sec-caution { color: var(--red); }
+  .sig-empty { text-align: center; padding: 30px 20px; font-family: var(--font-mono); font-size: 11px; color: var(--text-dim); letter-spacing: 1px; }
   .sig-row { display: flex; align-items: center; gap: 8px; padding: 7px 10px; background: var(--bg3); border: 1px solid var(--border); border-radius: 3px; margin-bottom: 3px; cursor: pointer; transition: background .12s, border-color .12s; }
   .sig-row:hover { background: var(--bg4); border-color: var(--border2); }
   .sig-row-seed { font-family: var(--font-mono); font-size: 9px; color: var(--text-dim); width: 52px; flex-shrink: 0; letter-spacing: 0.5px; }
@@ -432,7 +436,12 @@ function connectWS() {
   socket.on("signal:new", (data) => {
     const id = data.gameId || data.game_id;
     if (!id) return;
-    state.signals[id] = normalizeSignal(data);
+    const normSig = normalizeSignal(data);
+    state.signals[id] = normSig;
+    // Append to signal history
+    if (!window._signalHistory) window._signalHistory = {};
+    if (!window._signalHistory[id]) window._signalHistory[id] = [];
+    window._signalHistory[id].push({ composite: normSig.composite, firedAt: normSig.firedAt });
     rerenderCard(id);
     updateSummary();
     const sig = SIGNAL_CONFIG[data.signal] || SIGNAL_CONFIG.HOLD;
@@ -484,11 +493,20 @@ async function loadData() {
     const [games, signals] = await Promise.all([fetchGames(), fetchSignals()]);
     state.games = {};
     games.forEach(g => { const n = normalizeGame(g); state.games[n.gameId] = n; });
+    // Build signal history map and track latest per game
+    window._signalHistory = {};
     signals.forEach(s => {
       const id = s.game_id || s.gameId;
-      if (!state.signals[id] || new Date(s.fired_at || s.firedAt) > new Date(state.signals[id].firedAt)) {
-        state.signals[id] = normalizeSignal(s);
+      const norm = normalizeSignal(s);
+      if (!window._signalHistory[id]) window._signalHistory[id] = [];
+      window._signalHistory[id].push({ composite: norm.composite, firedAt: norm.firedAt });
+      if (!state.signals[id] || new Date(norm.firedAt) > new Date(state.signals[id].firedAt)) {
+        state.signals[id] = norm;
       }
+    });
+    // Sort each history by firedAt ascending
+    Object.values(window._signalHistory).forEach(arr => {
+      arr.sort((a, b) => new Date(a.firedAt) - new Date(b.firedAt));
     });
     document.getElementById("last-checked").textContent = "Loaded: " + new Date().toLocaleTimeString();
     addLog("Loaded " + games.length + " games, " + signals.length + " signals", "success");
@@ -699,41 +717,48 @@ const COMPOSITE_COLORS = {
   BACK_OFF: "#444",
 };
 
-function buildCardBars(sig) {
+function buildSparkline(gameId, color) {
+  const history = (window._signalHistory && window._signalHistory[gameId]) || [];
+  const w = 200, h = 28, pad = 2;
+  if (history.length === 0) {
+    return '<div class="sparkline-wrap"><svg width="100%" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="none"></svg><span class="sparkline-label">TREND</span></div>';
+  }
+  if (history.length === 1) {
+    const y = h - pad - (history[0].composite * (h - pad * 2));
+    return '<div class="sparkline-wrap"><svg width="100%" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="none">' +
+      '<line x1="' + pad + '" y1="' + y + '" x2="' + (w - pad) + '" y2="' + y + '" stroke="' + color + '" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.6"/>' +
+      '<circle cx="' + (w - pad) + '" cy="' + y + '" r="2.5" fill="' + color + '"/>' +
+    '</svg><span class="sparkline-label">TREND</span></div>';
+  }
+  const n = history.length;
+  const xStep = (w - pad * 2) / (n - 1);
+  const points = history.map((pt, i) => {
+    const x = pad + i * xStep;
+    const y = h - pad - (pt.composite * (h - pad * 2));
+    return x.toFixed(1) + "," + y.toFixed(1);
+  });
+  const lastX = pad + (n - 1) * xStep;
+  const lastY = h - pad - (history[n - 1].composite * (h - pad * 2));
+  return '<div class="sparkline-wrap"><svg width="100%" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="none">' +
+    '<polyline points="' + points.join(" ") + '" fill="none" stroke="' + color + '" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>' +
+    '<circle cx="' + lastX.toFixed(1) + '" cy="' + lastY.toFixed(1) + '" r="2.5" fill="' + color + '"/>' +
+  '</svg><span class="sparkline-label">TREND</span></div>';
+}
+
+function buildCardBars(sig, gameId) {
+  const barColor = sig ? (COMPOSITE_COLORS[sig.signal] || "#444") : "#444";
   if (!sig) {
     return '<div class="card-bars">' +
       '<div class="comp-bar-wrap"><div class="comp-bar-track"><div class="comp-bar-fill" style="width:0%;background:#444"></div></div><span class="comp-bar-val" style="color:#444">&ndash;</span></div>' +
-      '<div class="breakdown-bar-track"><span style="width:100%;background:#333"></span></div>' +
-      '<div class="bar-legend">' +
-        '<span class="bar-legend-item"><span class="bar-legend-dot" style="background:var(--teal)"></span>BOOK</span>' +
-        '<span class="bar-legend-item"><span class="bar-legend-dot" style="background:#8888ff"></span>CONTEXT</span>' +
-        '<span class="bar-legend-item"><span class="bar-legend-dot" style="background:#555"></span>UPSET</span>' +
-      '</div></div>';
+      buildSparkline(gameId, "#444") +
+    '</div>';
   }
   const comp = sig.composite != null ? sig.composite : 0;
-  const barColor = COMPOSITE_COLORS[sig.signal] || "#444";
   const pct = Math.min(Math.max(comp * 100, 0), 100);
-
-  // Breakdown: odds, context, remaining (upset/other)
-  const odds = sig.oddsScore != null ? Math.abs(sig.oddsScore) : 0;
-  const ctx = sig.contextScore != null ? Math.abs(sig.contextScore) : 0;
-  const total = odds + ctx || 1; // avoid /0
-  const oddsPct = (odds / total * 100).toFixed(1);
-  const ctxPct = (ctx / total * 100).toFixed(1);
-  const restPct = Math.max(0, 100 - parseFloat(oddsPct) - parseFloat(ctxPct)).toFixed(1);
-
   return '<div class="card-bars">' +
     '<div class="comp-bar-wrap"><div class="comp-bar-track"><div class="comp-bar-fill" style="width:' + pct + '%;background:' + barColor + '"></div></div><span class="comp-bar-val" style="color:' + barColor + '">' + comp.toFixed(2) + '</span></div>' +
-    '<div class="breakdown-bar-track">' +
-      '<span style="width:' + oddsPct + '%;background:var(--teal)"></span>' +
-      '<span style="width:' + ctxPct + '%;background:#8888ff"></span>' +
-      '<span style="width:' + restPct + '%;background:#555"></span>' +
-    '</div>' +
-    '<div class="bar-legend">' +
-      '<span class="bar-legend-item"><span class="bar-legend-dot" style="background:var(--teal)"></span>BOOK</span>' +
-      '<span class="bar-legend-item"><span class="bar-legend-dot" style="background:#8888ff"></span>CONTEXT</span>' +
-      '<span class="bar-legend-item"><span class="bar-legend-dot" style="background:#555"></span>UPSET</span>' +
-    '</div></div>';
+    buildSparkline(gameId, barColor) +
+  '</div>';
 }
 
 function buildSignalDetail(sig) {
@@ -822,7 +847,7 @@ function buildGameCard(g) {
       '<span class="team' + (team2.includes("TBD") ? " tbd-team" : "") + '">' + team2 + "</span>" +
     "</div>" +
     '<div class="status-badges">' + signalBadge + tvBadge + "</div>" +
-    buildCardBars(sig) +
+    buildCardBars(sig, g.gameId) +
     ticketHTML +
     signalDetailHTML;
   return card;
@@ -835,6 +860,7 @@ function rerenderCard(id) {
 }
 
 function switchTab(key) {
+  clearSignalFilter();
   state.activeTab = key;
   document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
   document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
@@ -908,42 +934,61 @@ function buildSignalRow(g, sig) {
   '</div>';
 }
 
+// Signals panel state
+const _sigPanelState = { subTab: "act", sortAsc: false };
+
 function buildSignalsPanel() {
   const games = Object.values(state.games);
-  const act = [], monitor = [], caution = [];
+  const act = [], caution = [];
 
   games.forEach(g => {
     const sig = state.signals[g.gameId];
-    const entry = { g, sig, comp: sig ? (sig.composite || 0) : -1 };
-    if (sig && (sig.signal === "GET_AGGRESSIVE" || sig.signal === "LEAN_IN")) act.push(entry);
-    else if (sig && (sig.signal === "WATCH" || sig.signal === "BACK_OFF")) caution.push(entry);
-    else monitor.push(entry);
+    if (!sig) return;
+    const entry = { g, sig, comp: sig.composite || 0 };
+    if (sig.signal === "GET_AGGRESSIVE" || sig.signal === "LEAN_IN") act.push(entry);
+    else if (sig.signal === "WATCH" || sig.signal === "BACK_OFF") caution.push(entry);
   });
 
-  act.sort((a, b) => b.comp - a.comp);
-  monitor.sort((a, b) => b.comp - a.comp);
-  caution.sort((a, b) => b.comp - a.comp);
+  const isAct = _sigPanelState.subTab === "act";
+  const sortAsc = _sigPanelState.sortAsc;
 
-  let html = '<div class="signals-panel">';
+  return '<div class="signals-panel">' +
+    '<div class="sig-panel-header">' +
+      '<span class="sig-pill' + (isAct ? ' pill-active' : '') + '" onclick="switchSigSubTab(\'act\')">LEAN IN / GET AGGRESSIVE <span class="pill-badge">' + act.length + '</span></span>' +
+      '<span class="sig-pill' + (!isAct ? ' pill-active' : '') + '" onclick="switchSigSubTab(\'caution\')">WATCH / BACK OFF <span class="pill-badge">' + caution.length + '</span></span>' +
+      '<span class="sig-sort-controls">' +
+        '<button class="sig-sort-btn' + (sortAsc ? ' sort-active' : '') + '" onclick="toggleSigSort(true)">DATE &uarr;</button>' +
+        '<button class="sig-sort-btn' + (!sortAsc ? ' sort-active' : '') + '" onclick="toggleSigSort(false)">DATE &darr;</button>' +
+      '</span>' +
+    '</div>' +
+    '<div class="sig-section" id="sig-rows-container">' +
+      renderSigRows(isAct ? act : caution, sortAsc) +
+    '</div>' +
+  '</div>';
+}
 
-  if (act.length > 0) {
-    html += '<div class="sig-section"><div class="sig-section-header sec-act">ACT NOW <span class="ssh-count">[' + act.length + ']</span></div>';
-    act.forEach(e => { html += buildSignalRow(e.g, e.sig); });
-    html += '</div>';
+function renderSigRows(entries, sortAsc) {
+  if (entries.length === 0) {
+    return '<div class="sig-empty">No active signals in this category.</div>';
   }
+  const sorted = entries.slice().sort((a, b) => {
+    const ta = new Date(a.g.gameTime).getTime();
+    const tb = new Date(b.g.gameTime).getTime();
+    return sortAsc ? ta - tb : tb - ta;
+  });
+  return sorted.map(e => buildSignalRow(e.g, e.sig)).join("");
+}
 
-  html += '<div class="sig-section"><div class="sig-section-header sec-monitor">MONITORING <span class="ssh-count">[' + monitor.length + ']</span></div>';
-  monitor.forEach(e => { html += buildSignalRow(e.g, e.sig); });
-  html += '</div>';
+function switchSigSubTab(tab) {
+  _sigPanelState.subTab = tab;
+  const panel = document.getElementById("panel-__signals");
+  if (panel) panel.innerHTML = buildSignalsPanel();
+}
 
-  if (caution.length > 0) {
-    html += '<div class="sig-section"><div class="sig-section-header sec-caution">CAUTION <span class="ssh-count">[' + caution.length + ']</span></div>';
-    caution.forEach(e => { html += buildSignalRow(e.g, e.sig); });
-    html += '</div>';
-  }
-
-  html += '</div>';
-  return html;
+function toggleSigSort(asc) {
+  _sigPanelState.sortAsc = asc;
+  const panel = document.getElementById("panel-__signals");
+  if (panel) panel.innerHTML = buildSignalsPanel();
 }
 
 function navigateToCard(gameId) {
