@@ -212,6 +212,38 @@
   .kalshi-bonus-card { background: var(--bg4); border-radius: 3px; padding: 12px 14px; text-align: center; }
   .kalshi-bonus-round { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
   .kalshi-bonus-value { font-family: var(--font-mono); font-size: 20px; font-weight: 600; color: var(--green); }
+
+  /* Composite + breakdown bars on game cards */
+  .card-bars { margin-bottom: 8px; animation: barFadeIn .4s ease; }
+  @keyframes barFadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .comp-bar-wrap { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
+  .comp-bar-track { flex: 1; height: 6px; background: var(--bg4); border-radius: 3px; overflow: hidden; }
+  .comp-bar-fill { height: 100%; border-radius: 3px; transition: width .3s ease; }
+  .comp-bar-val { font-family: var(--font-mono); font-size: 9px; font-weight: 600; width: 28px; text-align: right; flex-shrink: 0; }
+  .breakdown-bar-track { height: 4px; background: var(--bg4); border-radius: 2px; overflow: hidden; display: flex; }
+  .breakdown-bar-track > span { display: block; height: 100%; }
+  .bar-legend { display: flex; gap: 10px; margin-top: 3px; }
+  .bar-legend-item { display: flex; align-items: center; gap: 3px; font-family: var(--font-mono); font-size: 8px; color: var(--text-dim); letter-spacing: 0.5px; text-transform: uppercase; }
+  .bar-legend-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+
+  /* SIGNALS leaderboard tab */
+  .signals-panel { max-width: 900px; margin: 0 auto; }
+  .sig-section { margin-bottom: 20px; }
+  .sig-section-header { font-family: var(--font-mono); font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; padding: 8px 0; border-bottom: 1px solid var(--border); margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+  .sig-section-header .ssh-count { font-weight: 400; color: var(--text-dim); }
+  .sig-section-header.sec-act { color: var(--green); }
+  .sig-section-header.sec-monitor { color: var(--text-muted); }
+  .sig-section-header.sec-caution { color: var(--red); }
+  .sig-row { display: flex; align-items: center; gap: 8px; padding: 7px 10px; background: var(--bg3); border: 1px solid var(--border); border-radius: 3px; margin-bottom: 3px; cursor: pointer; transition: background .12s, border-color .12s; }
+  .sig-row:hover { background: var(--bg4); border-color: var(--border2); }
+  .sig-row-seed { font-family: var(--font-mono); font-size: 9px; color: var(--text-dim); width: 52px; flex-shrink: 0; letter-spacing: 0.5px; }
+  .sig-row-matchup { font-family: var(--font-mono); font-size: 12px; font-weight: 600; color: var(--text); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sig-row-time { font-family: var(--font-mono); font-size: 9px; color: var(--text-dim); width: 64px; flex-shrink: 0; text-align: right; }
+  .sig-row-bar-wrap { width: 120px; flex-shrink: 0; display: flex; align-items: center; gap: 4px; }
+  .sig-row-bar-track { flex: 1; height: 6px; background: var(--bg4); border-radius: 3px; overflow: hidden; }
+  .sig-row-bar-fill { height: 100%; border-radius: 3px; }
+  .sig-row-score { font-family: var(--font-mono); font-size: 10px; font-weight: 600; width: 30px; text-align: right; }
+  .sig-row-badge { flex-shrink: 0; }
 </style>
 </head>
 <body>
@@ -575,6 +607,14 @@ function renderAll() {
     tabsEl.appendChild(tab);
   });
 
+  // SIGNALS tab
+  const sigTab = document.createElement("div");
+  sigTab.className = "tab" + (state.activeTab === "__signals" ? " active" : "");
+  const sigCount = Object.keys(state.signals).length;
+  sigTab.innerHTML = 'SIGNALS <span class="tab-badge">' + sigCount + '</span>';
+  sigTab.onclick = () => switchTab("__signals");
+  tabsEl.appendChild(sigTab);
+
   // HOW IT WORKS tab
   const hiwTab = document.createElement("div");
   hiwTab.className = "tab" + (state.activeTab === "__hiw" ? " active" : "");
@@ -602,6 +642,13 @@ function renderAll() {
     panel.appendChild(buildRoundBlock(dateLabel, games));
     mainEl.appendChild(panel);
   });
+
+  // SIGNALS panel
+  const sigPanel = document.createElement("div");
+  sigPanel.className = "panel" + (state.activeTab === "__signals" ? " active" : "");
+  sigPanel.id = "panel-__signals";
+  sigPanel.innerHTML = buildSignalsPanel();
+  mainEl.appendChild(sigPanel);
 
   // HOW IT WORKS panel
   const hiwPanel = document.createElement("div");
@@ -642,6 +689,51 @@ function fmtMinutes(m) {
   if (m < 60) return Math.round(m) + " min";
   if (m < 1440) return (m / 60).toFixed(1) + " hrs";
   return Math.round(m / 1440) + " days";
+}
+
+const COMPOSITE_COLORS = {
+  GET_AGGRESSIVE: "#ff4444",
+  LEAN_IN: "#ff8c00",
+  HOLD: "#f0c040",
+  WATCH: "#00bcd4",
+  BACK_OFF: "#444",
+};
+
+function buildCardBars(sig) {
+  if (!sig) {
+    return '<div class="card-bars">' +
+      '<div class="comp-bar-wrap"><div class="comp-bar-track"><div class="comp-bar-fill" style="width:0%;background:#444"></div></div><span class="comp-bar-val" style="color:#444">&ndash;</span></div>' +
+      '<div class="breakdown-bar-track"><span style="width:100%;background:#333"></span></div>' +
+      '<div class="bar-legend">' +
+        '<span class="bar-legend-item"><span class="bar-legend-dot" style="background:var(--teal)"></span>BOOK</span>' +
+        '<span class="bar-legend-item"><span class="bar-legend-dot" style="background:#8888ff"></span>CONTEXT</span>' +
+        '<span class="bar-legend-item"><span class="bar-legend-dot" style="background:#555"></span>UPSET</span>' +
+      '</div></div>';
+  }
+  const comp = sig.composite != null ? sig.composite : 0;
+  const barColor = COMPOSITE_COLORS[sig.signal] || "#444";
+  const pct = Math.min(Math.max(comp * 100, 0), 100);
+
+  // Breakdown: odds, context, remaining (upset/other)
+  const odds = sig.oddsScore != null ? Math.abs(sig.oddsScore) : 0;
+  const ctx = sig.contextScore != null ? Math.abs(sig.contextScore) : 0;
+  const total = odds + ctx || 1; // avoid /0
+  const oddsPct = (odds / total * 100).toFixed(1);
+  const ctxPct = (ctx / total * 100).toFixed(1);
+  const restPct = Math.max(0, 100 - parseFloat(oddsPct) - parseFloat(ctxPct)).toFixed(1);
+
+  return '<div class="card-bars">' +
+    '<div class="comp-bar-wrap"><div class="comp-bar-track"><div class="comp-bar-fill" style="width:' + pct + '%;background:' + barColor + '"></div></div><span class="comp-bar-val" style="color:' + barColor + '">' + comp.toFixed(2) + '</span></div>' +
+    '<div class="breakdown-bar-track">' +
+      '<span style="width:' + oddsPct + '%;background:var(--teal)"></span>' +
+      '<span style="width:' + ctxPct + '%;background:#8888ff"></span>' +
+      '<span style="width:' + restPct + '%;background:#555"></span>' +
+    '</div>' +
+    '<div class="bar-legend">' +
+      '<span class="bar-legend-item"><span class="bar-legend-dot" style="background:var(--teal)"></span>BOOK</span>' +
+      '<span class="bar-legend-item"><span class="bar-legend-dot" style="background:#8888ff"></span>CONTEXT</span>' +
+      '<span class="bar-legend-item"><span class="bar-legend-dot" style="background:#555"></span>UPSET</span>' +
+    '</div></div>';
 }
 
 function buildSignalDetail(sig) {
@@ -730,6 +822,7 @@ function buildGameCard(g) {
       '<span class="team' + (team2.includes("TBD") ? " tbd-team" : "") + '">' + team2 + "</span>" +
     "</div>" +
     '<div class="status-badges">' + signalBadge + tvBadge + "</div>" +
+    buildCardBars(sig) +
     ticketHTML +
     signalDetailHTML;
   return card;
@@ -748,6 +841,7 @@ function switchTab(key) {
   const tabs = document.querySelectorAll(".tab");
   tabs.forEach(t => {
     if (key === "__all" && t.textContent.startsWith("ALL")) t.classList.add("active");
+    else if (key === "__signals" && t.textContent.startsWith("SIGNALS")) t.classList.add("active");
     else if (key === "__hiw" && t.textContent === "HOW IT WORKS") t.classList.add("active");
     else if (t.dataset.tabKey === key) t.classList.add("active");
   });
@@ -774,6 +868,105 @@ function updateSummary() {
   });
   document.getElementById("sum-aggressive").textContent = aggressive;
   document.getElementById("sum-caution").textContent = caution;
+}
+
+// ── SIGNALS leaderboard ──
+function extractSeeds(gameName) {
+  const m = gameName.match(/\((\d+)\)/g);
+  if (m && m.length >= 2) return m[0] + " vs " + m[1];
+  return "";
+}
+
+function shortMatchup(gameName) {
+  const parts = (gameName || "TBD vs TBD").split(/\s+vs\s+/i);
+  const strip = s => s.replace(/^\(\d+\)\s*/, '').trim();
+  const t1 = strip(parts[0] || "TBD");
+  const t2 = strip(parts[1] || "TBD");
+  return t1 + " vs " + t2;
+}
+
+function shortTime(gameTime) {
+  const d = new Date(gameTime);
+  return d.toLocaleDateString("en-US", { weekday: "short", timeZone: "America/New_York" }) + " " +
+    d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: "America/New_York" }).replace(" ", "").toLowerCase();
+}
+
+function buildSignalRow(g, sig) {
+  const sigConfig = sig ? (SIGNAL_CONFIG[sig.signal] || SIGNAL_CONFIG.HOLD) : null;
+  const comp = sig ? (sig.composite || 0) : 0;
+  const barColor = sig ? (COMPOSITE_COLORS[sig.signal] || "#444") : "#444";
+  const pct = Math.min(Math.max(comp * 100, 0), 100);
+  const badge = sigConfig
+    ? '<span class="badge ' + sigConfig.badge + '">' + sigConfig.label + '</span>'
+    : '<span class="badge badge-pending">PENDING</span>';
+  return '<div class="sig-row" onclick="navigateToCard(\'' + g.gameId + '\')">' +
+    '<span class="sig-row-seed">' + extractSeeds(g.game) + '</span>' +
+    '<span class="sig-row-matchup">' + shortMatchup(g.game) + '</span>' +
+    '<span class="sig-row-time">' + shortTime(g.gameTime) + '</span>' +
+    '<span class="sig-row-bar-wrap"><span class="sig-row-bar-track"><span class="sig-row-bar-fill" style="width:' + pct + '%;background:' + barColor + '"></span></span><span class="sig-row-score" style="color:' + barColor + '">' + comp.toFixed(2) + '</span></span>' +
+    '<span class="sig-row-badge">' + badge + '</span>' +
+  '</div>';
+}
+
+function buildSignalsPanel() {
+  const games = Object.values(state.games);
+  const act = [], monitor = [], caution = [];
+
+  games.forEach(g => {
+    const sig = state.signals[g.gameId];
+    const entry = { g, sig, comp: sig ? (sig.composite || 0) : -1 };
+    if (sig && (sig.signal === "GET_AGGRESSIVE" || sig.signal === "LEAN_IN")) act.push(entry);
+    else if (sig && (sig.signal === "WATCH" || sig.signal === "BACK_OFF")) caution.push(entry);
+    else monitor.push(entry);
+  });
+
+  act.sort((a, b) => b.comp - a.comp);
+  monitor.sort((a, b) => b.comp - a.comp);
+  caution.sort((a, b) => b.comp - a.comp);
+
+  let html = '<div class="signals-panel">';
+
+  if (act.length > 0) {
+    html += '<div class="sig-section"><div class="sig-section-header sec-act">ACT NOW <span class="ssh-count">[' + act.length + ']</span></div>';
+    act.forEach(e => { html += buildSignalRow(e.g, e.sig); });
+    html += '</div>';
+  }
+
+  html += '<div class="sig-section"><div class="sig-section-header sec-monitor">MONITORING <span class="ssh-count">[' + monitor.length + ']</span></div>';
+  monitor.forEach(e => { html += buildSignalRow(e.g, e.sig); });
+  html += '</div>';
+
+  if (caution.length > 0) {
+    html += '<div class="sig-section"><div class="sig-section-header sec-caution">CAUTION <span class="ssh-count">[' + caution.length + ']</span></div>';
+    caution.forEach(e => { html += buildSignalRow(e.g, e.sig); });
+    html += '</div>';
+  }
+
+  html += '</div>';
+  return html;
+}
+
+function navigateToCard(gameId) {
+  const g = state.games[gameId];
+  if (!g) return;
+  const dateKey = getDateKey(g.gameTime);
+  // Check if this date group exists as a tab
+  const dateGroups = getDateGroups();
+  const hasTab = dateGroups.some(([label]) => label === dateKey);
+  if (hasTab) {
+    switchTab(dateKey);
+  } else {
+    switchTab("__all");
+  }
+  // Scroll to card after tab switch
+  requestAnimationFrame(() => {
+    const card = document.getElementById("card-" + gameId);
+    if (card) {
+      card.scrollIntoView({ behavior: "smooth", block: "center" });
+      card.style.outline = "2px solid var(--teal)";
+      setTimeout(() => { card.style.outline = ""; }, 2000);
+    }
+  });
 }
 
 // ── HOW IT WORKS ──
