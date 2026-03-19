@@ -515,13 +515,14 @@ async function loadData() {
     state.games = {};
     games.forEach(g => { const n = normalizeGame(g); state.games[n.gameId] = n; });
     // Build signal history map and track latest per game
+    state.signals = {};
     window._signalHistory = {};
     signals.forEach(s => {
       const id = s.game_id || s.gameId;
       const norm = normalizeSignal(s);
       if (!window._signalHistory[id]) window._signalHistory[id] = [];
       window._signalHistory[id].push({ composite: norm.composite, firedAt: norm.firedAt });
-      if (!state.signals[id] || new Date(norm.firedAt) > new Date(state.signals[id].firedAt)) {
+      if (!state.signals[id] || new Date(norm.firedAt) >= new Date(state.signals[id].firedAt)) {
         state.signals[id] = norm;
       }
     });
@@ -805,7 +806,7 @@ function buildSignalDetail(sig) {
     '<div class="signal-detail-grid">' +
       '<div class="signal-detail-cell"><div class="signal-detail-label">Composite</div><div class="signal-detail-value">' + fmtScore(sig.composite) + '</div></div>' +
       '<div class="signal-detail-cell"><div class="signal-detail-label">Odds API</div><div class="signal-detail-value">' + fmtScore(sig.oddsScore) + '</div></div>' +
-      '<div class="signal-detail-cell"><div class="signal-detail-label">Confidence</div><div class="signal-detail-value">' + (sig.confidence != null ? (sig.confidence * 100).toFixed(0) + "%" : "&mdash;") + '</div></div>' +
+      '<div class="signal-detail-cell"><div class="signal-detail-label">Confidence</div><div class="signal-detail-value">' + (sig.confidence != null ? Math.round(sig.confidence * 100) + "%" : "&mdash;") + '</div></div>' +
       '<div class="signal-detail-cell"><div class="signal-detail-label">Tier</div><div class="signal-detail-value ' + sigConfig.cls + '">' + sigConfig.label + '</div></div>' +
     '</div>' +
   '</div>';
@@ -995,7 +996,7 @@ function buildSigExpandedPanel(gameId) {
   const oddsPct = Math.min((Math.abs(oddsVal) / 1.0) * 100, 100);
   const ctxPct = Math.min((Math.abs(ctxVal) / 1.0) * 100, 100);
 
-  const confStr = sig && sig.confidence != null ? (sig.confidence * 100).toFixed(0) + "%" : "&mdash;";
+  const confStr = sig && sig.confidence != null ? Math.round(sig.confidence * 100) + "%" : "&mdash;";
   const narrative = sig && sig.narrative ? sig.narrative : "No narrative available";
 
   return '<div class="sig-expanded">' +
