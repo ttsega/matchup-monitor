@@ -43,7 +43,9 @@
   .summary-bar { display: flex; background: var(--bg2); border-bottom: 1px solid var(--border); overflow-x: auto; }
   .summary-stat { padding: 8px 20px; border-right: 1px solid var(--border); display: flex; flex-direction: column; gap: 2px; min-width: 115px; cursor: pointer; transition: background .15s; }
   .summary-stat:hover { background: var(--bg3); }
-  .summary-stat.stat-active { background: var(--bg4); border-bottom: 2px solid var(--teal); }
+  .summary-stat.stat-active { background: var(--bg4); border-bottom: 2px solid var(--teal); box-shadow: inset 0 0 0 1px var(--teal); }
+  .summary-stat.stat-active .s-label { color: var(--teal); }
+  .summary-stat.stat-active .s-sub { color: var(--teal); opacity: 0.6; }
   .s-label { font-family: var(--font-mono); font-size: 9px; color: var(--text-dim); letter-spacing: 2px; text-transform: uppercase; }
   .s-value { font-family: var(--font-mono); font-size: 16px; font-weight: 600; color: var(--text); }
   .s-value.up { color: var(--green); }
@@ -470,7 +472,7 @@ function getDateKey(dateStr) {
   return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "America/New_York" });
 }
 
-function getDateGroups() {
+function getAllDateGroups() {
   const groups = {};
   Object.values(state.games).forEach(g => {
     const key = getDateKey(g.gameTime);
@@ -486,9 +488,21 @@ function getDateGroups() {
   return sorted;
 }
 
+function isGroupCompleted(games) {
+  return games.every(g => {
+    const mtg = g.minutesToGame;
+    if (mtg != null && mtg < 0) return true;
+    return new Date(g.gameTime).getTime() < Date.now();
+  });
+}
+
+function getDateGroups() {
+  return getAllDateGroups().filter(([, games]) => !isGroupCompleted(games));
+}
+
 // ── Signal filter ──
 function filterBySignal(type) {
-  if (type === "total") {
+  if (type === "total" || state.activeFilter === type) {
     clearSignalFilter();
     return;
   }
@@ -526,21 +540,22 @@ function applyFilter() {
 
 // ── Rendering ──
 function renderAll() {
+  const allDateGroups = getAllDateGroups();
   const dateGroups = getDateGroups();
   const tabsEl = document.getElementById("tabs-container");
   const mainEl = document.getElementById("main-container");
   tabsEl.innerHTML = "";
   mainEl.innerHTML = "";
 
-  if (dateGroups.length === 0) {
+  if (allDateGroups.length === 0) {
     mainEl.innerHTML = '<div class="empty-state"><div class="empty-state-msg">No games loaded. Click POPULATE BRACKET to fetch the NCAA tournament from ESPN.</div></div>';
     return;
   }
 
-  // ALL tab (only if there are multiple date groups)
+  // ALL tab (only if there are multiple active date groups)
   if (dateGroups.length > 1) {
     const allTab = document.createElement("div");
-    allTab.className = "tab" + (!state.activeTab || state.activeTab === "__all" ? " active" : "");
+    allTab.className = "tab" + (state.activeTab === "__all" ? " active" : "");
     allTab.textContent = "ALL";
     const allBadge = document.createElement("span");
     allBadge.className = "tab-badge";
@@ -550,14 +565,10 @@ function renderAll() {
     tabsEl.appendChild(allTab);
   }
 
-  // Tab per date
+  // Tab per active date
   dateGroups.forEach(([dateLabel, games]) => {
     const tab = document.createElement("div");
-    const isOnlyGroup = dateGroups.length === 1;
-    const isActive = isOnlyGroup
-      ? (!state.activeTab || state.activeTab === dateLabel)
-      : (state.activeTab === dateLabel);
-    tab.className = "tab" + (isActive ? " active" : "");
+    tab.className = "tab" + (state.activeTab === dateLabel ? " active" : "");
     tab.innerHTML = dateLabel + ' <span class="tab-badge">' + games.length + "</span>";
     tab.dataset.tabKey = dateLabel;
     tab.onclick = () => switchTab(dateLabel);
@@ -572,25 +583,21 @@ function renderAll() {
   tabsEl.appendChild(hiwTab);
 
   // Panels
-  // ALL panel (only if multiple groups)
+  // ALL panel — includes all date groups (even completed)
   if (dateGroups.length > 1) {
     const allPanel = document.createElement("div");
-    allPanel.className = "panel" + (!state.activeTab || state.activeTab === "__all" ? " active" : "");
+    allPanel.className = "panel" + (state.activeTab === "__all" ? " active" : "");
     allPanel.id = "panel-__all";
-    dateGroups.forEach(([dateLabel, games]) => {
+    allDateGroups.forEach(([dateLabel, games]) => {
       allPanel.appendChild(buildRoundBlock(dateLabel, games));
     });
     mainEl.appendChild(allPanel);
   }
 
-  // Per-date panels
+  // Per-date panels (active dates only)
   dateGroups.forEach(([dateLabel, games]) => {
-    const isOnlyGroup = dateGroups.length === 1;
-    const isActive = isOnlyGroup
-      ? (!state.activeTab || state.activeTab === dateLabel || state.activeTab === "__all")
-      : (state.activeTab === dateLabel);
     const panel = document.createElement("div");
-    panel.className = "panel" + (isActive ? " active" : "");
+    panel.className = "panel" + (state.activeTab === dateLabel ? " active" : "");
     panel.id = "panel-" + dateLabel;
     panel.appendChild(buildRoundBlock(dateLabel, games));
     mainEl.appendChild(panel);
@@ -605,6 +612,11 @@ function renderAll() {
 
   updateSummary();
   if (state.activeFilter) applyFilter();
+
+  // On first load, activate the ALL tab by default
+  if (state.activeTab === null) {
+    switchTab("__all");
+  }
 }
 
 function buildRoundBlock(label, games) {
