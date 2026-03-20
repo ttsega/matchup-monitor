@@ -243,7 +243,7 @@
   .sig-section { margin-bottom: 20px; }
   .sig-empty { text-align: center; padding: 30px 20px; font-family: var(--font-mono); font-size: 11px; color: var(--text-dim); letter-spacing: 1px; }
 
-  .sig-row-group { margin-bottom: 3px; }
+  .sig-row-group { margin-bottom: 3px; cursor: pointer; user-select: none; -webkit-user-select: none; }
   .sig-expanded { background: var(--bg2); border: 1px solid var(--teal); border-top: none; border-radius: 0 0 3px 3px; padding: 14px 16px; animation: barFadeIn .2s ease; }
   .sig-row-group .sig-row { border-radius: 3px 3px 0 0; }
   .sig-row-group:not(.sig-open) .sig-row { border-radius: 3px; }
@@ -265,7 +265,7 @@
   .sig-exp-actions { display: flex; gap: 8px; }
   .sig-row { display: flex; align-items: center; gap: 8px; padding: 7px 10px; background: var(--bg3); border: 1px solid var(--border); border-radius: 3px; margin-bottom: 3px; cursor: pointer; transition: background .12s, border-color .12s; }
   .sig-row:hover { background: var(--bg4); border-color: var(--border2); }
-  .sig-row-seed { font-family: var(--font-mono); font-size: 9px; color: var(--text-dim); width: 52px; flex-shrink: 0; letter-spacing: 0.5px; }
+  .sig-row-seed { font-family: var(--font-mono); font-size: 9px; color: var(--text-dim); width: 52px; flex-shrink: 0; letter-spacing: 0.5px; pointer-events: none; }
   .sig-row-matchup { font-family: var(--font-mono); font-size: 12px; font-weight: 600; color: var(--text); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .sig-row-time { font-family: var(--font-mono); font-size: 9px; color: var(--text-dim); width: 64px; flex-shrink: 0; text-align: right; }
   .sig-row-bar-wrap { width: 120px; flex-shrink: 0; display: flex; align-items: center; gap: 4px; }
@@ -1027,8 +1027,8 @@ function buildSignalRow(g, sig) {
   const badge = sigConfig
     ? '<span class="badge ' + sigConfig.badge + '">' + sigConfig.label + '</span>'
     : '<span class="badge badge-pending">PENDING</span>';
-  return '<div class="sig-row-group" id="sig-group-' + g.gameId + '">' +
-    '<div class="sig-row" onclick="toggleSigExpand(\'' + g.gameId + '\')">' +
+  return '<div class="sig-row-group" id="sig-group-' + g.gameId + '" onclick="toggleSigExpand(\'' + g.gameId + '\')">' +
+    '<div class="sig-row">' +
       '<span class="sig-row-seed">' + extractSeeds(g.game) + '</span>' +
       '<span class="sig-row-matchup">' + shortMatchup(g.game) + '</span>' +
       '<span class="sig-row-time">' + shortTime(g.gameTime) + '</span>' +
