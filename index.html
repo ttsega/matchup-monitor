@@ -269,6 +269,43 @@
   .sig-row-bar-fill { height: 100%; border-radius: 3px; }
   .sig-row-score { font-family: var(--font-mono); font-size: 10px; font-weight: 600; width: 30px; text-align: right; }
   .sig-row-badge { flex-shrink: 0; }
+
+  /* SESSIONS tab */
+  .sessions-panel { max-width: 900px; margin: 0 auto; }
+  .sessions-note { font-family: var(--font-mono); font-size: 10px; color: var(--text-dim); letter-spacing: 0.5px; line-height: 1.6; margin-bottom: 16px; padding: 10px 14px; background: var(--bg3); border: 1px solid var(--border); border-radius: 4px; }
+  .sessions-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .sessions-date-hdr { font-family: var(--font-mono); font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim); border-bottom: 1px solid var(--border); padding-bottom: 6px; margin-bottom: 10px; }
+  .sessions-date-hdr span { color: var(--text-muted); }
+  .sessions-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 8px; margin-bottom: 20px; }
+  .session-card { background: var(--bg4); border: 1px solid var(--border); border-radius: 4px; padding: 12px 14px; cursor: pointer; transition: border-color .2s, background .15s; border-left: 3px solid var(--border); position: relative; }
+  .session-card:hover { border-color: var(--border2); background: #1e2940; }
+  .session-card.sess-aggressive { border-left-color: var(--green); }
+  .session-card.sess-lean { border-left-color: var(--green-mid); }
+  .session-card.sess-hold { border-left-color: var(--text-muted); }
+  .session-card.sess-watch { border-left-color: var(--amber); }
+  .session-card.sess-backoff { border-left-color: var(--red); }
+  .session-card-venue { font-family: var(--font-mono); font-size: 11px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+  .session-card-label { font-family: var(--font-mono); font-size: 9px; color: var(--text-muted); letter-spacing: 1px; margin-bottom: 8px; }
+  .session-card-signal-row { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .session-card-signal-row .badge { font-size: 11px; padding: 3px 10px; }
+  .session-card-comp { display: flex; align-items: center; gap: 8px; }
+  .session-card-comp-track { flex: 1; height: 6px; background: var(--bg); border-radius: 3px; overflow: hidden; max-width: 140px; }
+  .session-card-comp-fill { height: 100%; border-radius: 3px; }
+  .session-card-comp-val { font-family: var(--font-mono); font-size: 12px; font-weight: 600; }
+  .session-diverge { display: inline-flex; align-items: center; gap: 4px; font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.5px; color: var(--amber); background: var(--amber-dim); border: 1px solid #5a3a00; border-radius: 2px; padding: 2px 7px; margin-top: 4px; cursor: help; }
+  .session-expanded { background: var(--bg2); border: 1px solid var(--teal); border-top: none; border-radius: 0 0 4px 4px; padding: 12px 14px; animation: barFadeIn .2s ease; }
+  .session-card.sess-open { border-radius: 4px 4px 0 0; border-color: var(--teal); border-bottom-color: var(--border); }
+  .sess-game-row { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: var(--bg3); border: 1px solid var(--border); border-radius: 3px; margin-bottom: 4px; }
+  .sess-game-seed { font-family: var(--font-mono); font-size: 10px; color: var(--text-dim); width: 55px; flex-shrink: 0; }
+  .sess-game-teams { font-family: var(--font-mono); font-size: 11px; font-weight: 600; color: var(--text); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sess-game-time { font-family: var(--font-mono); font-size: 9px; color: var(--text-dim); width: 68px; flex-shrink: 0; text-align: right; }
+  .sess-game-bar-wrap { width: 90px; flex-shrink: 0; display: flex; align-items: center; gap: 4px; }
+  .sess-game-bar-track { flex: 1; height: 4px; background: var(--bg4); border-radius: 2px; overflow: hidden; }
+  .sess-game-bar-fill { height: 100%; border-radius: 2px; }
+  .sess-game-score { font-family: var(--font-mono); font-size: 9px; font-weight: 600; width: 26px; text-align: right; }
+  .sess-game-badge { flex-shrink: 0; }
+  .sess-game-weight { font-family: var(--font-mono); font-size: 8px; color: var(--text-dim); letter-spacing: 0.5px; width: 80px; flex-shrink: 0; text-align: right; }
+  @media (max-width: 840px) { .sessions-grid { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
@@ -491,6 +528,9 @@ function normalizeGame(row) {
     awayProbability: row.awayProbability ?? row.away_probability ?? null,
     isNationalTV: row.isNationalTV ?? row.is_national_tv ?? false,
     googleTrend: row.googleTrend ?? row.google_trend ?? null,
+    venueName: row.venueName ?? row.venue_name ?? null,
+    venueCity: row.venueCity ?? row.venue_city ?? null,
+    seatgeekUrl: row.seatgeekUrl ?? row.seatgeek_url ?? null,
   };
 }
 
@@ -655,6 +695,16 @@ function renderAll() {
   sigTab.onclick = () => switchTab("__signals");
   tabsEl.appendChild(sigTab);
 
+  // SESSIONS tab
+  const sessionGroups = buildSessionGroups(Object.values(state.games), state.signals);
+  const todayKey = new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "America/New_York" });
+  const todaySessionCount = sessionGroups.filter(s => s.dateKey === todayKey).length;
+  const sessTab = document.createElement("div");
+  sessTab.className = "tab" + (state.activeTab === "__sessions" ? " active" : "");
+  sessTab.innerHTML = 'SESSIONS <span class="tab-badge">' + todaySessionCount + '</span>';
+  sessTab.onclick = () => switchTab("__sessions");
+  tabsEl.appendChild(sessTab);
+
   // HOW IT WORKS tab
   const hiwTab = document.createElement("div");
   hiwTab.className = "tab" + (state.activeTab === "__hiw" ? " active" : "");
@@ -689,6 +739,13 @@ function renderAll() {
   sigPanel.id = "panel-__signals";
   sigPanel.innerHTML = buildSignalsPanel();
   mainEl.appendChild(sigPanel);
+
+  // SESSIONS panel
+  const sessPanel = document.createElement("div");
+  sessPanel.className = "panel" + (state.activeTab === "__sessions" ? " active" : "");
+  sessPanel.id = "panel-__sessions";
+  sessPanel.innerHTML = buildSessionsPanel(sessionGroups);
+  mainEl.appendChild(sessPanel);
 
   // HOW IT WORKS panel
   const hiwPanel = document.createElement("div");
@@ -905,6 +962,7 @@ function switchTab(key) {
   tabs.forEach(t => {
     if (key === "__all" && t.textContent.startsWith("ALL")) t.classList.add("active");
     else if (key === "__signals" && t.textContent.startsWith("SIGNALS")) t.classList.add("active");
+    else if (key === "__sessions" && t.textContent.startsWith("SESSIONS")) t.classList.add("active");
     else if (key === "__hiw" && t.textContent === "HOW IT WORKS") t.classList.add("active");
     else if (t.dataset.tabKey === key) t.classList.add("active");
   });
@@ -1118,6 +1176,294 @@ function navigateToCard(gameId) {
       setTimeout(() => { card.style.outline = ""; }, 2000);
     }
   });
+}
+
+// ── SESSIONS ──
+const UPSET_PROB_TABLE = {
+  '1_16': 0.01, '16_1': 0.01, '2_15': 0.06, '15_2': 0.06,
+  '3_14': 0.15, '14_3': 0.15, '4_13': 0.21, '13_4': 0.21,
+  '5_12': 0.35, '12_5': 0.35, '6_11': 0.38, '11_6': 0.38,
+  '7_10': 0.40, '10_7': 0.40, '8_9': 0.49, '9_8': 0.49,
+};
+
+function parseSeedNum(gameName) {
+  const m = (gameName || "").match(/\((\d+)\)/g);
+  if (m && m.length >= 2) return [parseInt(m[0].replace(/[()]/g,'')), parseInt(m[1].replace(/[()]/g,''))];
+  return [null, null];
+}
+
+function getUpsetProb(seed1, seed2) {
+  if (seed1 == null || seed2 == null) return 0.25;
+  const key = seed1 + '_' + seed2;
+  return UPSET_PROB_TABLE[key] ?? 0.25;
+}
+
+function getESTDate(d) {
+  return new Date(d).toLocaleDateString("en-US", { year: "numeric", month: "2-digit", day: "2-digit", timeZone: "America/New_York" });
+}
+
+function getESTHour(d) {
+  return parseInt(new Date(d).toLocaleTimeString("en-US", { hour: "numeric", hour12: false, timeZone: "America/New_York" }), 10);
+}
+
+function tierForComposite(c) {
+  if (c >= 0.82) return 'GET_AGGRESSIVE';
+  if (c >= 0.68) return 'LEAN_IN';
+  if (c >= 0.45) return 'HOLD';
+  if (c >= 0.30) return 'WATCH';
+  return 'BACK_OFF';
+}
+
+function sessionCardClass(tier) {
+  const map = { GET_AGGRESSIVE: 'sess-aggressive', LEAN_IN: 'sess-lean', HOLD: 'sess-hold', WATCH: 'sess-watch', BACK_OFF: 'sess-backoff' };
+  return map[tier] || '';
+}
+
+function buildSessionGroups(games, signals) {
+  const PRE_SWEET16 = ['First Four', 'First Round', 'Second Round'];
+  const eligible = games.filter(g => {
+    const t = g.tournament || '';
+    return PRE_SWEET16.some(r => t.includes(r));
+  }).filter(g => g.venueName);
+
+  // Group by venue + EST date
+  const buckets = {};
+  eligible.forEach(g => {
+    const dateStr = getESTDate(g.gameTime);
+    const key = g.venueName + '|' + dateStr;
+    if (!buckets[key]) buckets[key] = [];
+    buckets[key].push(g);
+  });
+
+  // Split each bucket into sessions (games within 3h of each other)
+  const sessions = [];
+  Object.values(buckets).forEach(bucket => {
+    bucket.sort((a, b) => new Date(a.gameTime) - new Date(b.gameTime));
+    let current = [bucket[0]];
+    for (let i = 1; i < bucket.length; i++) {
+      const diff = (new Date(bucket[i].gameTime) - new Date(current[0].gameTime)) / 3600000;
+      if (diff <= 3) {
+        current.push(bucket[i]);
+      } else {
+        sessions.push(current);
+        current = [bucket[i]];
+      }
+    }
+    sessions.push(current);
+  });
+
+  // Build session objects
+  return sessions.filter(s => s.length >= 2).map(gameList => {
+    const first = gameList[0];
+    const times = gameList.map(g => new Date(g.gameTime).getTime());
+    const minTime = Math.min(...times);
+    const maxTime = Math.max(...times);
+    const avgHour = getESTHour(new Date((minTime + maxTime) / 2));
+    const label = (avgHour >= 11 && avgHour < 17) ? 'Afternoon Session' : 'Evening Session';
+
+    const timeRange = new Date(minTime).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: "America/New_York" }) +
+      "\u2013" + new Date(maxTime).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: "America/New_York" }) + " EST";
+
+    const dateKey = getDateKey(first.gameTime);
+    const dateLong = new Date(first.gameTime).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric", timeZone: "America/New_York" });
+
+    // Compute combined signal
+    const gameData = gameList.map(g => {
+      const sig = signals[g.gameId];
+      const [s1, s2] = parseSeedNum(g.game);
+      const upsetProb = getUpsetProb(s1, s2);
+      return { game: g, sig, seeds: [s1, s2], upsetProb, composite: sig ? sig.composite : null };
+    });
+
+    const withData = gameData.filter(d => d.composite != null);
+    let weightedComposite = 0;
+    let combinedTier = 'HOLD';
+    let diverging = false;
+
+    if (withData.length >= 2) {
+      const totalProb = withData.reduce((s, d) => s + d.upsetProb, 0);
+      const weights = withData.map(d => d.upsetProb / totalProb);
+      weightedComposite = withData.reduce((s, d, i) => s + d.composite * weights[i], 0);
+      combinedTier = tierForComposite(weightedComposite);
+
+      const tiers = new Set(withData.map(d => tierForComposite(d.composite)));
+      diverging = tiers.size > 1;
+
+      // Store weights back for display
+      withData.forEach((d, i) => { d.weight = weights[i]; });
+    } else if (withData.length === 1) {
+      weightedComposite = withData[0].composite;
+      combinedTier = tierForComposite(weightedComposite);
+      withData[0].weight = 1;
+    }
+
+    return {
+      id: first.venueName + '|' + dateKey + '|' + label,
+      venueName: first.venueName,
+      venueCity: first.venueCity || '',
+      label,
+      timeRange,
+      dateKey,
+      dateLong,
+      gameData,
+      weightedComposite,
+      combinedTier,
+      diverging,
+      sortTime: minTime,
+    };
+  });
+}
+
+const _sessPanelState = { sortAsc: false };
+let _sessExpandedId = null;
+
+function buildSessionsPanel(sessionGroups) {
+  const sortAsc = _sessPanelState.sortAsc;
+  const sorted = sessionGroups.slice().sort((a, b) => sortAsc ? a.sortTime - b.sortTime : b.sortTime - a.sortTime);
+
+  // Group by date
+  const byDate = {};
+  sorted.forEach(s => {
+    if (!byDate[s.dateLong]) byDate[s.dateLong] = [];
+    byDate[s.dateLong].push(s);
+  });
+
+  let html = '<div class="sessions-panel">' +
+    '<div class="sessions-note">Pre Sweet 16 &middot; Session tickets cover 2 games &middot; Signals are venue-weighted. Sweet 16+ signals are game-specific &mdash; see date tabs.</div>' +
+    '<div class="sessions-header">' +
+      '<span></span>' +
+      '<span class="sig-sort-controls">' +
+        '<button class="sig-sort-btn' + (sortAsc ? ' sort-active' : '') + '" onclick="toggleSessSort(true)">DATE &uarr;</button>' +
+        '<button class="sig-sort-btn' + (!sortAsc ? ' sort-active' : '') + '" onclick="toggleSessSort(false)">DATE &darr;</button>' +
+      '</span>' +
+    '</div>';
+
+  Object.entries(byDate).forEach(([dateLong, sessions]) => {
+    html += '<div class="sessions-date-hdr"><span>' + dateLong + '</span> &mdash; ' + sessions.length + ' session' + (sessions.length > 1 ? 's' : '') + '</div>';
+    html += '<div class="sessions-grid">';
+    sessions.forEach(s => {
+      html += buildSessionCard(s);
+    });
+    html += '</div>';
+  });
+
+  html += '</div>';
+  return html;
+}
+
+function buildSessionCard(s) {
+  const sigConfig = SIGNAL_CONFIG[s.combinedTier] || SIGNAL_CONFIG.HOLD;
+  const barColor = COMPOSITE_COLORS[s.combinedTier] || "#444";
+  const pct = Math.min(Math.max(s.weightedComposite * 100, 0), 100);
+  const isOpen = _sessExpandedId === s.id;
+
+  let html = '<div class="session-card-wrap" id="sess-wrap-' + cssId(s.id) + '">';
+  html += '<div class="session-card ' + sessionCardClass(s.combinedTier) + (isOpen ? ' sess-open' : '') + '" onclick="toggleSessExpand(\'' + escAttr(s.id) + '\')">';
+  html += '<div class="session-card-venue">' + esc(s.venueName) + ' &middot; ' + esc(s.venueCity) + '</div>';
+  html += '<div class="session-card-label">' + s.label + ' &middot; ' + s.timeRange + '</div>';
+
+  html += '<div class="session-card-signal-row">';
+  const hasData = s.gameData.some(d => d.composite != null);
+  if (hasData) {
+    html += '<span class="badge ' + sigConfig.badge + '">' + sigConfig.label + '</span>';
+    html += '<div class="session-card-comp">' +
+      '<div class="session-card-comp-track"><div class="session-card-comp-fill" style="width:' + pct.toFixed(0) + '%;background:' + barColor + '"></div></div>' +
+      '<span class="session-card-comp-val" style="color:' + barColor + '">' + s.weightedComposite.toFixed(2) + '</span>' +
+    '</div>';
+  } else {
+    html += '<span class="badge badge-pending">AWAITING DATA</span>';
+  }
+  html += '</div>';
+
+  if (s.diverging) {
+    html += '<div class="session-diverge" title="Games in this session have opposing signals. Combined score is upset-probability weighted.">\u26A1 DIVERGING SIGNALS</div>';
+  }
+
+  html += '</div>'; // close .session-card
+
+  if (isOpen) {
+    html += buildSessionExpanded(s);
+  }
+
+  html += '</div>'; // close .session-card-wrap
+  return html;
+}
+
+function buildSessionExpanded(s) {
+  let html = '<div class="session-expanded">';
+  s.gameData.forEach(d => {
+    const sig = d.sig;
+    const sigConfig = sig ? (SIGNAL_CONFIG[sig.signal] || SIGNAL_CONFIG.HOLD) : null;
+    const barColor = sig ? (COMPOSITE_COLORS[sig.signal] || "#444") : "#444";
+    const comp = d.composite != null ? d.composite : 0;
+    const pct = Math.min(Math.max(comp * 100, 0), 100);
+    const [s1, s2] = d.seeds;
+    const seedStr = (s1 != null && s2 != null) ? '(' + s1 + ') vs (' + s2 + ')' : '';
+
+    const parts = (d.game.game || "TBD vs TBD").split(/\s+vs\s+/i);
+    const t1 = (parts[0] || "TBD").replace(/^\(\d+\)\s*/, '').split(/\s+/)[0];
+    const t2 = (parts[1] || "TBD").replace(/^\(\d+\)\s*/, '').split(/\s+/)[0];
+
+    const tipTime = new Date(d.game.gameTime).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: "America/New_York" }) + " EST";
+
+    const badge = sigConfig
+      ? '<span class="badge ' + sigConfig.badge + '">' + sigConfig.label + '</span>'
+      : '<span class="badge badge-pending">AWAITING</span>';
+
+    const weightPct = d.weight != null ? Math.round(d.weight * 100) + '% session demand weight' : '';
+
+    html += '<div class="sess-game-row">' +
+      '<span class="sess-game-seed">' + seedStr + '</span>' +
+      '<span class="sess-game-teams">' + esc(t1) + ' vs ' + esc(t2) + '</span>' +
+      '<span class="sess-game-time">' + tipTime + '</span>' +
+      '<span class="sess-game-bar-wrap"><span class="sess-game-bar-track"><span class="sess-game-bar-fill" style="width:' + pct.toFixed(0) + '%;background:' + barColor + '"></span></span><span class="sess-game-score" style="color:' + barColor + '">' + (d.composite != null ? comp.toFixed(2) : '—') + '</span></span>' +
+      '<span class="sess-game-badge">' + badge + '</span>' +
+      '<span class="sess-game-weight">' + weightPct + '</span>' +
+    '</div>';
+  });
+  html += '</div>';
+  return html;
+}
+
+function cssId(str) { return str.replace(/[^a-zA-Z0-9]/g, '_'); }
+function escAttr(str) { return str.replace(/'/g, "\\'").replace(/"/g, '&quot;'); }
+function esc(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+
+function toggleSessExpand(sessionId) {
+  const prevWrap = _sessExpandedId ? document.getElementById("sess-wrap-" + cssId(_sessExpandedId)) : null;
+  if (prevWrap) {
+    const card = prevWrap.querySelector('.session-card');
+    if (card) card.classList.remove('sess-open');
+    const exp = prevWrap.querySelector('.session-expanded');
+    if (exp) exp.remove();
+  }
+
+  if (_sessExpandedId === sessionId) {
+    _sessExpandedId = null;
+    return;
+  }
+
+  _sessExpandedId = sessionId;
+  const wrap = document.getElementById("sess-wrap-" + cssId(sessionId));
+  if (!wrap) return;
+  const card = wrap.querySelector('.session-card');
+  if (card) card.classList.add('sess-open');
+
+  // Find the session data — re-compute from current state
+  const sessionGroups = buildSessionGroups(Object.values(state.games), state.signals);
+  const sess = sessionGroups.find(s => s.id === sessionId);
+  if (sess) {
+    wrap.insertAdjacentHTML("beforeend", buildSessionExpanded(sess));
+  }
+}
+
+function toggleSessSort(asc) {
+  _sessPanelState.sortAsc = asc;
+  const panel = document.getElementById("panel-__sessions");
+  if (panel) {
+    const sessionGroups = buildSessionGroups(Object.values(state.games), state.signals);
+    panel.innerHTML = buildSessionsPanel(sessionGroups);
+  }
 }
 
 // ── HOW IT WORKS ──
