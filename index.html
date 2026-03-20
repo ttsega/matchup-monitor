@@ -299,16 +299,19 @@
   .session-diverge { display: inline-flex; align-items: center; gap: 4px; font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.5px; color: var(--amber); background: var(--amber-dim); border: 1px solid #5a3a00; border-radius: 2px; padding: 2px 7px; margin-top: 4px; cursor: help; }
   .session-expanded { background: var(--bg2); border: 1px solid var(--teal); border-top: none; border-radius: 0 0 4px 4px; padding: 12px 14px; animation: barFadeIn .2s ease; }
   .session-card.sess-open { border-radius: 4px 4px 0 0; border-color: var(--teal); border-bottom-color: var(--border); }
-  .sess-game-row { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: var(--bg3); border: 1px solid var(--border); border-radius: 3px; margin-bottom: 4px; }
-  .sess-game-seed { font-family: var(--font-mono); font-size: 10px; color: var(--text-dim); width: 55px; flex-shrink: 0; }
-  .sess-game-teams { font-family: var(--font-mono); font-size: 11px; font-weight: 600; color: var(--text); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .sess-game-time { font-family: var(--font-mono); font-size: 9px; color: var(--text-dim); width: 68px; flex-shrink: 0; text-align: right; }
-  .sess-game-bar-wrap { width: 90px; flex-shrink: 0; display: flex; align-items: center; gap: 4px; }
-  .sess-game-bar-track { flex: 1; height: 4px; background: var(--bg4); border-radius: 2px; overflow: hidden; }
-  .sess-game-bar-fill { height: 100%; border-radius: 2px; }
-  .sess-game-score { font-family: var(--font-mono); font-size: 9px; font-weight: 600; width: 26px; text-align: right; }
+  .sess-game-row { background: var(--bg3); border: 1px solid var(--border); border-radius: 3px; margin-bottom: 6px; padding: 10px 12px; }
+  .sess-game-matchup { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+  .sess-game-team { font-family: var(--font-mono); font-size: 12px; font-weight: 600; color: var(--text); max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sess-game-team .seed { font-weight: 400; color: var(--text-muted); font-size: 10px; margin-right: 3px; }
+  .sess-game-vs { font-family: var(--font-mono); font-size: 9px; color: var(--text-dim); letter-spacing: 1px; flex-shrink: 0; }
+  .sess-game-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .sess-game-time { font-family: var(--font-mono); font-size: 9px; color: var(--text-dim); }
   .sess-game-badge { flex-shrink: 0; }
-  .sess-game-weight { font-family: var(--font-mono); font-size: 8px; color: var(--text-dim); letter-spacing: 0.5px; width: 80px; flex-shrink: 0; text-align: right; }
+  .sess-game-score { font-family: var(--font-mono); font-size: 11px; font-weight: 600; }
+  .sess-game-bar-wrap { display: flex; align-items: center; gap: 5px; flex: 1; max-width: 160px; }
+  .sess-game-bar-track { flex: 1; height: 5px; background: var(--bg4); border-radius: 2px; overflow: hidden; }
+  .sess-game-bar-fill { height: 100%; border-radius: 2px; }
+  .sess-game-weight { font-family: var(--font-mono); font-size: 9px; color: var(--text-dim); letter-spacing: 0.5px; margin-left: auto; }
   @media (max-width: 840px) { .sessions-grid { grid-template-columns: 1fr; } }
 </style>
 </head>
@@ -1325,6 +1328,9 @@ function buildSessionsPanel(sessionGroups) {
   const sortAsc = _sessPanelState.sortAsc;
   const sorted = sessionGroups.slice().sort((a, b) => sortAsc ? a.sortTime - b.sortTime : b.sortTime - a.sortTime);
 
+  // Build card index for click handling (numeric ids avoid special chars in onclick)
+  _sessCardIndex = sorted.map(s => s.id);
+
   // Group by date
   const byDate = {};
   sorted.forEach(s => {
@@ -1346,7 +1352,8 @@ function buildSessionsPanel(sessionGroups) {
     html += '<div class="sessions-date-hdr"><span>' + dateLong + '</span> &mdash; ' + sessions.length + ' session' + (sessions.length > 1 ? 's' : '') + '</div>';
     html += '<div class="sessions-grid">';
     sessions.forEach(s => {
-      html += buildSessionCard(s);
+      const idx = _sessCardIndex.indexOf(s.id);
+      html += buildSessionCard(s, idx);
     });
     html += '</div>';
   });
@@ -1355,14 +1362,17 @@ function buildSessionsPanel(sessionGroups) {
   return html;
 }
 
-function buildSessionCard(s) {
+// Session card index for click handling (avoids special chars in onclick strings)
+let _sessCardIndex = [];
+
+function buildSessionCard(s, idx) {
   const sigConfig = SIGNAL_CONFIG[s.combinedTier] || SIGNAL_CONFIG.HOLD;
   const barColor = COMPOSITE_COLORS[s.combinedTier] || "#444";
   const pct = Math.min(Math.max(s.weightedComposite * 100, 0), 100);
   const isOpen = _sessExpandedId === s.id;
 
-  let html = '<div class="session-card-wrap" id="sess-wrap-' + cssId(s.id) + '">';
-  html += '<div class="session-card ' + sessionCardClass(s.combinedTier) + (isOpen ? ' sess-open' : '') + '" onclick="toggleSessExpand(\'' + escAttr(s.id) + '\')">';
+  let html = '<div class="session-card-wrap" id="sess-wrap-' + idx + '">';
+  html += '<div class="session-card ' + sessionCardClass(s.combinedTier) + (isOpen ? ' sess-open' : '') + '" onclick="toggleSessExpand(' + idx + ')">';
   html += '<div class="session-card-venue">' + esc(s.venueName) + ' &middot; ' + esc(s.venueCity) + '</div>';
   html += '<div class="session-card-label">' + s.label + ' &middot; ' + s.timeRange + '</div>';
 
@@ -1402,11 +1412,12 @@ function buildSessionExpanded(s) {
     const comp = d.composite != null ? d.composite : 0;
     const pct = Math.min(Math.max(comp * 100, 0), 100);
     const [s1, s2] = d.seeds;
-    const seedStr = (s1 != null && s2 != null) ? '(' + s1 + ') vs (' + s2 + ')' : '';
 
     const parts = (d.game.game || "TBD vs TBD").split(/\s+vs\s+/i);
-    const t1 = (parts[0] || "TBD").replace(/^\(\d+\)\s*/, '').split(/\s+/)[0];
-    const t2 = (parts[1] || "TBD").replace(/^\(\d+\)\s*/, '').split(/\s+/)[0];
+    const t1Full = (parts[0] || "TBD").replace(/^\(\d+\)\s*/, '').trim();
+    const t2Full = (parts[1] || "TBD").replace(/^\(\d+\)\s*/, '').trim();
+    const seed1 = s1 != null ? '<span class="seed">(' + s1 + ')</span> ' : '';
+    const seed2 = s2 != null ? '<span class="seed">(' + s2 + ')</span> ' : '';
 
     const tipTime = new Date(d.game.gameTime).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: "America/New_York" }) + " EST";
 
@@ -1414,15 +1425,21 @@ function buildSessionExpanded(s) {
       ? '<span class="badge ' + sigConfig.badge + '">' + sigConfig.label + '</span>'
       : '<span class="badge badge-pending">AWAITING</span>';
 
-    const weightPct = d.weight != null ? Math.round(d.weight * 100) + '% session demand weight' : '';
+    const weightPct = d.weight != null ? Math.round(d.weight * 100) + '%' : '';
 
     html += '<div class="sess-game-row">' +
-      '<span class="sess-game-seed">' + seedStr + '</span>' +
-      '<span class="sess-game-teams">' + esc(t1) + ' vs ' + esc(t2) + '</span>' +
-      '<span class="sess-game-time">' + tipTime + '</span>' +
-      '<span class="sess-game-bar-wrap"><span class="sess-game-bar-track"><span class="sess-game-bar-fill" style="width:' + pct.toFixed(0) + '%;background:' + barColor + '"></span></span><span class="sess-game-score" style="color:' + barColor + '">' + (d.composite != null ? comp.toFixed(2) : '—') + '</span></span>' +
-      '<span class="sess-game-badge">' + badge + '</span>' +
-      '<span class="sess-game-weight">' + weightPct + '</span>' +
+      '<div class="sess-game-matchup">' +
+        '<span class="sess-game-team">' + seed1 + esc(t1Full) + '</span>' +
+        '<span class="sess-game-vs">VS</span>' +
+        '<span class="sess-game-team">' + seed2 + esc(t2Full) + '</span>' +
+      '</div>' +
+      '<div class="sess-game-meta">' +
+        '<span class="sess-game-time">' + tipTime + '</span>' +
+        '<span class="sess-game-badge">' + badge + '</span>' +
+        '<span class="sess-game-score" style="color:' + barColor + '">' + (d.composite != null ? comp.toFixed(2) : '\u2014') + '</span>' +
+        '<span class="sess-game-bar-wrap"><span class="sess-game-bar-track"><span class="sess-game-bar-fill" style="width:' + pct.toFixed(0) + '%;background:' + barColor + '"></span></span></span>' +
+        (weightPct ? '<span class="sess-game-weight">Session weight: ' + weightPct + '</span>' : '') +
+      '</div>' +
     '</div>';
   });
   html += '</div>';
@@ -1430,30 +1447,44 @@ function buildSessionExpanded(s) {
 }
 
 function cssId(str) { return str.replace(/[^a-zA-Z0-9]/g, '_'); }
-function escAttr(str) { return str.replace(/'/g, "\\'").replace(/"/g, '&quot;'); }
 function esc(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
 
-function toggleSessExpand(sessionId) {
-  const prevWrap = _sessExpandedId ? document.getElementById("sess-wrap-" + cssId(_sessExpandedId)) : null;
-  if (prevWrap) {
-    const card = prevWrap.querySelector('.session-card');
-    if (card) card.classList.remove('sess-open');
-    const exp = prevWrap.querySelector('.session-expanded');
-    if (exp) exp.remove();
+function toggleSessExpand(idx) {
+  const sessionId = _sessCardIndex[idx];
+  if (!sessionId) return;
+
+  // Collapse previous
+  if (_sessExpandedId != null && _sessExpandedId !== sessionId) {
+    const prevIdx = _sessCardIndex.indexOf(_sessExpandedId);
+    if (prevIdx !== -1) {
+      const prevWrap = document.getElementById("sess-wrap-" + prevIdx);
+      if (prevWrap) {
+        const card = prevWrap.querySelector('.session-card');
+        if (card) card.classList.remove('sess-open');
+        const exp = prevWrap.querySelector('.session-expanded');
+        if (exp) exp.remove();
+      }
+    }
   }
 
+  const wrap = document.getElementById("sess-wrap-" + idx);
+  if (!wrap) return;
+
+  // Toggle same card
   if (_sessExpandedId === sessionId) {
     _sessExpandedId = null;
+    const card = wrap.querySelector('.session-card');
+    if (card) card.classList.remove('sess-open');
+    const exp = wrap.querySelector('.session-expanded');
+    if (exp) exp.remove();
     return;
   }
 
   _sessExpandedId = sessionId;
-  const wrap = document.getElementById("sess-wrap-" + cssId(sessionId));
-  if (!wrap) return;
   const card = wrap.querySelector('.session-card');
   if (card) card.classList.add('sess-open');
 
-  // Find the session data — re-compute from current state
+  // Build and inject expanded content
   const sessionGroups = buildSessionGroups(Object.values(state.games), state.signals);
   const sess = sessionGroups.find(s => s.id === sessionId);
   if (sess) {
@@ -1463,6 +1494,7 @@ function toggleSessExpand(sessionId) {
 
 function toggleSessSort(asc) {
   _sessPanelState.sortAsc = asc;
+  _sessExpandedId = null;
   const panel = document.getElementById("panel-__sessions");
   if (panel) {
     const sessionGroups = buildSessionGroups(Object.values(state.games), state.signals);
