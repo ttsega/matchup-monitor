@@ -1579,9 +1579,10 @@ function buildHowItWorks() {
       '<div class="hiw-title">Kalshi Bonus</div>' +
       '<div class="hiw-text">Kalshi prediction market data is additive only (not a weighted component). It activates in the Sweet 16 and beyond, adding a bonus when convergence is detected between prediction markets and other signals.</div>' +
       '<div class="kalshi-bonus-grid">' +
-        '<div class="kalshi-bonus-card"><div class="kalshi-bonus-round">Elite Eight</div><div class="kalshi-bonus-value">+0.05</div></div>' +
+        '<div class="kalshi-bonus-card"><div class="kalshi-bonus-round">Sweet 16 / Elite Eight</div><div class="kalshi-bonus-value">+0.05</div></div>' +
         '<div class="kalshi-bonus-card"><div class="kalshi-bonus-round">Final Four / Championship</div><div class="kalshi-bonus-value">+0.08</div></div>' +
       '</div>' +
+      '<div class="hiw-text" style="margin-top:8px;font-size:11px;color:var(--text-dim)">Not active in First Round or Second Round.</div>' +
     '</div>' +
 
   '</div>';
@@ -1621,8 +1622,8 @@ function setWeightMode(seatgeekActive) {
   if (seatgeekActive) {
     activeBtn.className = "btn btn-primary";
     inactiveBtn.className = "btn btn-ghost";
-    animateWeight("hiw-bar-odds", 42);
-    animateWeight("hiw-bar-context", 6);
+    animateWeight("hiw-bar-odds", 40);
+    animateWeight("hiw-bar-context", 8);
     animateWeight("hiw-bar-upset", 2);
     animateWeight("hiw-bar-tickets", 50);
   } else {
